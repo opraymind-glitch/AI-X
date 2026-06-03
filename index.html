@@ -20,11 +20,9 @@
 
     /* ── ヘッダー ── */
     header {
-      background: var(--white);
-      padding: 14px 20px;
+      background: var(--white); padding: 14px 20px;
       display: flex; justify-content: space-between; align-items: center;
-      border-bottom: 1px solid #e5e7eb;
-      position: sticky; top: 0; z-index: 1000;
+      border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 1000;
     }
     .logo { font-size: 1.4rem; font-weight: 800; color: var(--blue); letter-spacing: 0.05em; }
     .header-btn {
@@ -48,47 +46,88 @@
     .btn-white:hover { transform: translateY(-2px); }
 
     /* ── 検索セクション ── */
-    #search-section {
-      background: var(--blue-light);
-      padding: 40px 16px 32px;
-    }
+    #search-section { background: var(--blue-light); padding: 40px 16px 32px; }
     #search-section h2 { text-align: center; font-size: 1.3rem; font-weight: 800; margin-bottom: 20px; }
 
-    .filter-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      max-width: 600px;
-      margin: 0 auto 16px;
+    .filter-stack {
+      display: flex; flex-direction: column; gap: 12px;
+      max-width: 600px; margin: 0 auto 16px;
     }
-    .filter-full { grid-column: 1 / -1; }
+
+    /* フィルターブロック */
+    .filter-block {
+      background: var(--white); border-radius: 12px;
+      border: 1.5px solid #c7dff5; overflow: hidden;
+    }
+    .filter-block-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px; cursor: default;
+    }
+    .filter-block-header .block-label {
+      font-size: 0.78rem; font-weight: 700; color: var(--blue-dark);
+    }
+    .filter-block-header .block-value {
+      font-size: 0.85rem; color: var(--gray); font-weight: 500;
+    }
+    .filter-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+      padding: 0 14px 14px;
+    }
+    .filter-row.single { grid-template-columns: 1fr; }
 
     .filter-group label {
-      display: block; font-size: 0.78rem; font-weight: 700;
+      display: block; font-size: 0.75rem; font-weight: 700;
       color: var(--blue-dark); margin-bottom: 4px;
     }
-    .filter-group select, .filter-group input {
+    .filter-group select {
       width: 100%; padding: 9px 10px; border: 1.5px solid #c7dff5;
       border-radius: 8px; font-size: 0.9rem; background: var(--white);
       appearance: none; -webkit-appearance: none;
     }
     .filter-group select:focus { outline: none; border-color: var(--blue); }
+    .filter-group select:disabled { background: #f3f4f6; color: #aaa; }
 
-    .type-group { grid-column: 1 / -1; }
-    .type-group label.group-label {
-      display: block; font-size: 0.78rem; font-weight: 700;
-      color: var(--blue-dark); margin-bottom: 8px;
+    /* サブフィルター（スライドイン） */
+    .sub-filter {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+      padding: 0 14px;
     }
-    .type-checkboxes { display: flex; flex-wrap: wrap; gap: 8px; }
-    .type-checkboxes label {
+    .sub-filter.open {
+      max-height: 200px;
+      padding: 0 14px 14px;
+    }
+    .sub-filter .filter-group { margin-top: 4px; }
+    .sub-filter-label {
+      font-size: 0.72rem; color: var(--blue); font-weight: 700;
+      margin-bottom: 6px; display: none;
+    }
+    .sub-filter.open .sub-filter-label { display: block; }
+
+    /* チェックボックスタグ */
+    .tag-checks { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 14px 14px; }
+    .tag-checks label {
       display: flex; align-items: center; gap: 5px;
       background: var(--white); border: 1.5px solid #c7dff5;
       border-radius: 20px; padding: 5px 12px; font-size: 0.85rem;
       cursor: pointer; transition: all 0.15s;
     }
-    .type-checkboxes input[type=checkbox] { accent-color: var(--blue); }
-    .type-checkboxes label:has(input:checked) {
+    .tag-checks input[type=checkbox] { accent-color: var(--blue); width: 14px; height: 14px; }
+    .tag-checks label:has(input:checked) {
       background: var(--blue); color: white; border-color: var(--blue);
+    }
+
+    /* サブタイプチェック（スライドイン） */
+    .subtype-area {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.3s ease;
+      background: #f0f8ff;
+      border-top: 1px solid #c7dff5;
+    }
+    .subtype-area.open { max-height: 200px; }
+    .subtype-area-inner { padding: 10px 14px 14px; }
+    .subtype-area-inner .sub-label {
+      font-size: 0.72rem; font-weight: 700; color: var(--blue-dark); margin-bottom: 8px;
     }
 
     .search-btn {
@@ -100,8 +139,20 @@
     .search-btn:hover { background: var(--blue-dark); }
 
     /* ── 地図 ── */
-    #map-section { padding: 0; }
     #map { width: 100%; height: 60vh; min-height: 320px; }
+
+    /* ── 凡例 ── */
+    #legend {
+      display: none; padding: 12px 16px;
+      background: var(--blue-light); border-top: 1px solid #c7dff5;
+    }
+    #legend.visible { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 600; }
+    .legend-dot { width: 14px; height: 14px; border-radius: 50%; }
+
+    /* ── ローディング ── */
+    #loading { display: none; text-align: center; padding: 20px; font-size: 0.9rem; color: var(--gray); }
+    #loading.visible { display: block; }
 
     /* ── 結果リスト ── */
     #results-section { padding: 20px 16px; }
@@ -117,40 +168,19 @@
     }
     .result-card .card-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
     .result-card .card-meta { font-size: 0.8rem; color: var(--gray); display: flex; flex-wrap: wrap; gap: 8px; }
-    .tag {
-      display: inline-block; padding: 2px 8px; border-radius: 10px;
-      font-size: 0.75rem; font-weight: 600;
-    }
-    .tag-road { background: #dbeafe; color: #1d4ed8; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; }
+    .tag-road  { background: #dbeafe; color: #1d4ed8; }
     .tag-trail { background: #dcfce7; color: #15803d; }
     .tag-track { background: #fef9c3; color: #854d0e; }
     .tag-ultra { background: #fce7f3; color: #9d174d; }
 
-    /* ── 施設凡例 ── */
-    #legend {
-      display: none;
-      padding: 12px 16px;
-      background: var(--blue-light);
-      border-top: 1px solid #c7dff5;
-    }
-    #legend.visible { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
-    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 600; }
-    .legend-dot { width: 14px; height: 14px; border-radius: 50%; }
-
-    /* ── ローディング ── */
-    #loading {
-      display: none; text-align: center; padding: 20px;
-      font-size: 0.9rem; color: var(--gray);
-    }
-    #loading.visible { display: block; }
-
-    /* ── CTA締め ── */
+    /* ── CTA ── */
     .cta-section {
       background: linear-gradient(160deg, #1a8fe3 0%, #0d5fa0 100%);
       color: var(--white); text-align: center; padding: 56px 24px;
     }
     .cta-section h2 { font-size: 1.4rem; font-weight: 900; margin-bottom: 10px; }
-    .cta-section p { font-size: 0.9rem; opacity: 0.85; margin-bottom: 28px; }
+    .cta-section p  { font-size: 0.9rem; opacity: 0.85; margin-bottom: 28px; }
 
     footer { background: var(--text); color: #aaa; text-align: center; padding: 20px; font-size: 0.78rem; }
   </style>
@@ -173,66 +203,82 @@
 <!-- 検索セクション -->
 <section id="search-section">
   <h2>🔍 大会を探す</h2>
-  <div class="filter-grid">
+  <div class="filter-stack">
 
-    <!-- 地域 -->
-    <div class="filter-group">
-      <label>地域</label>
-      <select id="filter-region" onchange="updatePrefecture()">
-        <option value="">すべての地域</option>
-        <option>北海道</option>
-        <option>東北</option>
-        <option>関東</option>
-        <option>中部</option>
-        <option>近畿</option>
-        <option>中国</option>
-        <option>四国</option>
-        <option>九州・沖縄</option>
-      </select>
+    <!-- ① 開催地 -->
+    <div class="filter-block">
+      <div class="filter-block-header">
+        <span class="block-label">📍 開催地</span>
+        <span class="block-value" id="loc-summary">すべての地域</span>
+      </div>
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>地域</label>
+          <select id="filter-region" onchange="onRegionChange()">
+            <option value="">すべての地域</option>
+            <option>北海道</option><option>東北</option><option>関東</option>
+            <option>中部</option><option>近畿</option><option>中国</option>
+            <option>四国</option><option>九州・沖縄</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>都道府県</label>
+          <select id="filter-pref" disabled onchange="updateLocSummary()">
+            <option value="">地域を先に選択</option>
+          </select>
+        </div>
+      </div>
     </div>
 
-    <!-- 都道府県 -->
-    <div class="filter-group">
-      <label>都道府県</label>
-      <select id="filter-pref">
-        <option value="">すべて</option>
-      </select>
+    <!-- ② 開催時期 -->
+    <div class="filter-block">
+      <div class="filter-block-header">
+        <span class="block-label">📅 開催時期</span>
+        <span class="block-value" id="date-summary">すべての時期</span>
+      </div>
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>月</label>
+          <select id="filter-month" onchange="onMonthChange()">
+            <option value="">すべての月</option>
+            <option value="1">1月</option><option value="2">2月</option>
+            <option value="3">3月</option><option value="4">4月</option>
+            <option value="5">5月</option><option value="6">6月</option>
+            <option value="7">7月</option><option value="8">8月</option>
+            <option value="9">9月</option><option value="10">10月</option>
+            <option value="11">11月</option><option value="12">12月</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>週</label>
+          <select id="filter-week" disabled onchange="updateDateSummary()">
+            <option value="">月を先に選択</option>
+          </select>
+        </div>
+      </div>
     </div>
 
-    <!-- 月 -->
-    <div class="filter-group">
-      <label>開催月</label>
-      <select id="filter-month" onchange="updateWeek()">
-        <option value="">すべての月</option>
-        <option value="1">1月</option><option value="2">2月</option>
-        <option value="3">3月</option><option value="4">4月</option>
-        <option value="5">5月</option><option value="6">6月</option>
-        <option value="7">7月</option><option value="8">8月</option>
-        <option value="9">9月</option><option value="10">10月</option>
-        <option value="11">11月</option><option value="12">12月</option>
-      </select>
-    </div>
+    <!-- ③ レース種別 -->
+    <div class="filter-block">
+      <div class="filter-block-header">
+        <span class="block-label">🏃 レース種別</span>
+        <span class="block-value" id="type-summary">すべての種別</span>
+      </div>
 
-    <!-- 週 -->
-    <div class="filter-group">
-      <label>開催週</label>
-      <select id="filter-week">
-        <option value="">すべての週</option>
-        <option value="1">第1週</option>
-        <option value="2">第2週</option>
-        <option value="3">第3週</option>
-        <option value="4">第4週</option>
-      </select>
-    </div>
+      <!-- 大種別 -->
+      <div class="tag-checks" id="main-type-checks">
+        <label><input type="checkbox" name="main" value="ロード"  onchange="onMainTypeChange()"> ロード</label>
+        <label><input type="checkbox" name="main" value="トレイル" onchange="onMainTypeChange()"> トレイル</label>
+        <label><input type="checkbox" name="main" value="トラック" onchange="onMainTypeChange()"> トラック</label>
+        <label><input type="checkbox" name="main" value="ウルトラ" onchange="onMainTypeChange()"> ウルトラ</label>
+      </div>
 
-    <!-- レース種別 -->
-    <div class="type-group">
-      <label class="group-label">レース種別</label>
-      <div class="type-checkboxes">
-        <label><input type="checkbox" value="ロード" checked> ロード</label>
-        <label><input type="checkbox" value="トレイル" checked> トレイル</label>
-        <label><input type="checkbox" value="トラック" checked> トラック</label>
-        <label><input type="checkbox" value="ウルトラ" checked> ウルトラ</label>
+      <!-- サブ種別（選択後に展開） -->
+      <div class="subtype-area" id="subtype-area">
+        <div class="subtype-area-inner">
+          <div class="sub-label">▸ 詳細種目を選択（任意）</div>
+          <div class="tag-checks" id="sub-type-checks"></div>
+        </div>
       </div>
     </div>
 
@@ -252,17 +298,15 @@
 </div>
 
 <!-- 地図 -->
-<div id="map-section">
-  <div id="map"></div>
-</div>
+<div id="map"></div>
 
-<!-- 検索結果リスト -->
+<!-- 結果リスト -->
 <section id="results-section">
   <h3 id="result-count"></h3>
   <div id="result-list"></div>
 </section>
 
-<!-- CTA締め -->
+<!-- CTA -->
 <section class="cta-section">
   <h2>アプリ版も近日公開！</h2>
   <p>通知機能・オフラインマップなど、さらに便利になります。</p>
@@ -272,57 +316,119 @@
 <footer>© 2026 RunStay · 大会データはサンプルです</footer>
 
 <script>
-// ── 都道府県マスタ ──
+// ── マスタデータ ──
 const PREF_BY_REGION = {
-  "北海道": ["北海道"],
-  "東北": ["青森県","岩手県","宮城県","秋田県","山形県","福島県"],
-  "関東": ["茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県"],
-  "中部": ["新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県","静岡県","愛知県"],
-  "近畿": ["三重県","滋賀県","京都府","大阪府","兵庫県","奈良県","和歌山県"],
-  "中国": ["鳥取県","島根県","岡山県","広島県","山口県"],
-  "四国": ["徳島県","香川県","愛媛県","高知県"],
-  "九州・沖縄": ["福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県","沖縄県"]
+  "北海道":   ["北海道"],
+  "東北":     ["青森県","岩手県","宮城県","秋田県","山形県","福島県"],
+  "関東":     ["茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県"],
+  "中部":     ["新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県","静岡県","愛知県"],
+  "近畿":     ["三重県","滋賀県","京都府","大阪府","兵庫県","奈良県","和歌山県"],
+  "中国":     ["鳥取県","島根県","岡山県","広島県","山口県"],
+  "四国":     ["徳島県","香川県","愛媛県","高知県"],
+  "九州・沖縄":["福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県","沖縄県"]
 };
 
-function updatePrefecture() {
-  const region = document.getElementById('filter-region').value;
-  const sel = document.getElementById('filter-pref');
-  sel.innerHTML = '<option value="">すべて</option>';
-  if (region && PREF_BY_REGION[region]) {
-    PREF_BY_REGION[region].forEach(p => {
-      sel.innerHTML += `<option value="${p}">${p}</option>`;
-    });
-  }
-}
-
-function updateWeek() {
-  const month = document.getElementById('filter-month').value;
-  const sel = document.getElementById('filter-week');
-  sel.disabled = !month;
-  if (!month) sel.value = '';
-}
+const SUBTYPES = {
+  "ロード":  ["フルマラソン(42.195km)", "ハーフマラソン(21km)", "10km", "5km以下"],
+  "トレイル":["ショート(〜30km)", "ミドル(30〜80km)", "ロング(80km〜)"],
+  "トラック":["5000m", "10000m", "その他"],
+  "ウルトラ":["50km", "100km", "200km以上"]
+};
 
 // ── 大会ダミーデータ ──
 const MARATHONS = [
-  { id:1,  name:"東京マラソン",         pref:"東京都",   region:"関東",    lat:35.6813, lng:139.7671, month:3,  week:1, type:"ロード",  dist:"フル" },
-  { id:2,  name:"大阪マラソン",         pref:"大阪府",   region:"近畿",    lat:34.6937, lng:135.5023, month:11, week:4, type:"ロード",  dist:"フル" },
-  { id:3,  name:"北海道マラソン",       pref:"北海道",   region:"北海道",  lat:43.0618, lng:141.3545, month:8,  week:4, type:"ロード",  dist:"フル" },
-  { id:4,  name:"福岡国際マラソン",     pref:"福岡県",   region:"九州・沖縄",lat:33.5904,lng:130.4017,month:12, week:1, type:"ロード",  dist:"フル" },
-  { id:5,  name:"京都マラソン",         pref:"京都府",   region:"近畿",    lat:35.0116, lng:135.7681, month:3,  week:2, type:"ロード",  dist:"フル" },
-  { id:6,  name:"神戸マラソン",         pref:"兵庫県",   region:"近畿",    lat:34.6901, lng:135.1956, month:11, week:3, type:"ロード",  dist:"フル" },
-  { id:7,  name:"横浜マラソン",         pref:"神奈川県", region:"関東",    lat:35.4437, lng:139.6380, month:10, week:4, type:"ロード",  dist:"フル" },
-  { id:8,  name:"富士登山競走",         pref:"山梨県",   region:"中部",    lat:35.3606, lng:138.7274, month:7,  week:4, type:"トレイル",dist:"26km" },
-  { id:9,  name:"UTMF",               pref:"静岡県",   region:"中部",    lat:35.3606, lng:138.7274, month:4,  week:3, type:"トレイル",dist:"165km"},
-  { id:10, name:"信越五岳トレイル",     pref:"長野県",   region:"中部",    lat:36.7513, lng:138.1812, month:9,  week:2, type:"トレイル",dist:"110km"},
-  { id:11, name:"野辺山ウルトラ",       pref:"長野県",   region:"中部",    lat:35.9419, lng:138.4748, month:5,  week:3, type:"ウルトラ",dist:"100km"},
-  { id:12, name:"サロマ湖100kmウルトラ",pref:"北海道",   region:"北海道",  lat:44.1167, lng:143.9667, month:6,  week:4, type:"ウルトラ",dist:"100km"},
-  { id:13, name:"仙台国際ハーフ",       pref:"宮城県",   region:"東北",    lat:38.2682, lng:140.8694, month:5,  week:2, type:"ロード",  dist:"ハーフ"},
-  { id:14, name:"いびがわマラソン",     pref:"岐阜県",   region:"中部",    lat:35.5072, lng:136.5642, month:11, week:2, type:"ロード",  dist:"フル" },
-  { id:15, name:"愛媛マラソン",         pref:"愛媛県",   region:"四国",    lat:33.8416, lng:132.7657, month:2,  week:1, type:"ロード",  dist:"フル" },
-  { id:16, name:"那覇マラソン",         pref:"沖縄県",   region:"九州・沖縄",lat:26.2124,lng:127.6809,month:12, week:1, type:"ロード",  dist:"フル" },
-  { id:17, name:"水戸黄門漫遊マラソン", pref:"茨城県",   region:"関東",    lat:36.3716, lng:140.4750, month:10, week:4, type:"ロード",  dist:"フル" },
-  { id:18, name:"つくばマラソン",       pref:"茨城県",   region:"関東",    lat:36.0832, lng:140.1113, month:11, week:4, type:"ロード",  dist:"フル" },
+  { id:1,  name:"東京マラソン",          pref:"東京都",    region:"関東",      lat:35.6813, lng:139.7671, month:3,  week:1, type:"ロード",   subtype:"フルマラソン(42.195km)" },
+  { id:2,  name:"大阪マラソン",          pref:"大阪府",    region:"近畿",      lat:34.6937, lng:135.5023, month:11, week:4, type:"ロード",   subtype:"フルマラソン(42.195km)" },
+  { id:3,  name:"北海道マラソン",        pref:"北海道",    region:"北海道",    lat:43.0618, lng:141.3545, month:8,  week:4, type:"ロード",   subtype:"フルマラソン(42.195km)" },
+  { id:4,  name:"福岡国際マラソン",      pref:"福岡県",    region:"九州・沖縄", lat:33.5904, lng:130.4017, month:12, week:1, type:"ロード",   subtype:"フルマラソン(42.195km)" },
+  { id:5,  name:"京都マラソン",          pref:"京都府",    region:"近畿",      lat:35.0116, lng:135.7681, month:3,  week:2, type:"ロード",   subtype:"フルマラソン(42.195km)" },
+  { id:6,  name:"神戸マラソン",          pref:"兵庫県",    region:"近畿",      lat:34.6901, lng:135.1956, month:11, week:3, type:"ロード",   subtype:"フルマラソン(42.195km)" },
+  { id:7,  name:"横浜マラソン",          pref:"神奈川県",  region:"関東",      lat:35.4437, lng:139.6380, month:10, week:4, type:"ロード",   subtype:"フルマラソン(42.195km)" },
+  { id:8,  name:"仙台国際ハーフ",        pref:"宮城県",    region:"東北",      lat:38.2682, lng:140.8694, month:5,  week:2, type:"ロード",   subtype:"ハーフマラソン(21km)" },
+  { id:9,  name:"いびがわマラソン",      pref:"岐阜県",    region:"中部",      lat:35.5072, lng:136.5642, month:11, week:2, type:"ロード",   subtype:"フルマラソン(42.195km)" },
+  { id:10, name:"愛媛マラソン",          pref:"愛媛県",    region:"四国",      lat:33.8416, lng:132.7657, month:2,  week:1, type:"ロード",   subtype:"フルマラソン(42.195km)" },
+  { id:11, name:"那覇マラソン",          pref:"沖縄県",    region:"九州・沖縄", lat:26.2124, lng:127.6809, month:12, week:1, type:"ロード",   subtype:"フルマラソン(42.195km)" },
+  { id:12, name:"水戸黄門漫遊マラソン",  pref:"茨城県",    region:"関東",      lat:36.3716, lng:140.4750, month:10, week:4, type:"ロード",   subtype:"フルマラソン(42.195km)" },
+  { id:13, name:"つくばマラソン",        pref:"茨城県",    region:"関東",      lat:36.0832, lng:140.1113, month:11, week:4, type:"ロード",   subtype:"フルマラソン(42.195km)" },
+  { id:14, name:"富士登山競走",          pref:"山梨県",    region:"中部",      lat:35.3606, lng:138.7274, month:7,  week:4, type:"トレイル",  subtype:"ショート(〜30km)" },
+  { id:15, name:"UTMF",                 pref:"静岡県",    region:"中部",      lat:35.3606, lng:138.7274, month:4,  week:3, type:"トレイル",  subtype:"ロング(80km〜)" },
+  { id:16, name:"信越五岳トレイル",      pref:"長野県",    region:"中部",      lat:36.7513, lng:138.1812, month:9,  week:2, type:"トレイル",  subtype:"ロング(80km〜)" },
+  { id:17, name:"上州武尊山スカイビュー",pref:"群馬県",    region:"関東",      lat:36.7906, lng:139.1803, month:7,  week:2, type:"トレイル",  subtype:"ミドル(30〜80km)" },
+  { id:18, name:"野辺山ウルトラ",        pref:"長野県",    region:"中部",      lat:35.9419, lng:138.4748, month:5,  week:3, type:"ウルトラ",  subtype:"100km" },
+  { id:19, name:"サロマ湖100kmウルトラ", pref:"北海道",    region:"北海道",    lat:44.1167, lng:143.9667, month:6,  week:4, type:"ウルトラ",  subtype:"100km" },
+  { id:20, name:"四万十川ウルトラ",      pref:"高知県",    region:"四国",      lat:33.0747, lng:132.9506, month:10, week:3, type:"ウルトラ",  subtype:"100km" },
 ];
+
+// ── 地域 → 都道府県 ──
+function onRegionChange() {
+  const region = document.getElementById('filter-region').value;
+  const prefSel = document.getElementById('filter-pref');
+  if (region) {
+    prefSel.innerHTML = '<option value="">すべて</option>';
+    PREF_BY_REGION[region].forEach(p => prefSel.innerHTML += `<option value="${p}">${p}</option>`);
+    prefSel.disabled = false;
+  } else {
+    prefSel.innerHTML = '<option value="">地域を先に選択</option>';
+    prefSel.disabled = true;
+  }
+  updateLocSummary();
+}
+
+function updateLocSummary() {
+  const r = document.getElementById('filter-region').value;
+  const p = document.getElementById('filter-pref').value;
+  document.getElementById('loc-summary').textContent = p || r || 'すべての地域';
+}
+
+// ── 月 → 週 ──
+function onMonthChange() {
+  const month = document.getElementById('filter-month').value;
+  const weekSel = document.getElementById('filter-week');
+  if (month) {
+    weekSel.innerHTML = '<option value="">すべての週</option>'
+      + ['第1週','第2週','第3週','第4週'].map((w,i) => `<option value="${i+1}">${w}</option>`).join('');
+    weekSel.disabled = false;
+  } else {
+    weekSel.innerHTML = '<option value="">月を先に選択</option>';
+    weekSel.disabled = true;
+    weekSel.value = '';
+  }
+  updateDateSummary();
+}
+
+function updateDateSummary() {
+  const m = document.getElementById('filter-month').value;
+  const w = document.getElementById('filter-week').value;
+  let txt = 'すべての時期';
+  if (m && w) txt = `${m}月 第${w}週`;
+  else if (m) txt = `${m}月`;
+  document.getElementById('date-summary').textContent = txt;
+}
+
+// ── 大種別 → サブ種別 ──
+function onMainTypeChange() {
+  const checked = [...document.querySelectorAll('#main-type-checks input:checked')].map(c => c.value);
+  const subArea = document.getElementById('subtype-area');
+  const subChecks = document.getElementById('sub-type-checks');
+
+  if (checked.length === 0) {
+    subArea.classList.remove('open');
+    subChecks.innerHTML = '';
+  } else {
+    // 選択された大種別のサブタイプを収集（重複除去）
+    const subs = [...new Set(checked.flatMap(t => SUBTYPES[t] || []))];
+    subChecks.innerHTML = subs.map(s =>
+      `<label><input type="checkbox" name="sub" value="${s}"> ${s}</label>`
+    ).join('');
+    subArea.classList.add('open');
+  }
+  updateTypeSummary();
+}
+
+function updateTypeSummary() {
+  const main = [...document.querySelectorAll('#main-type-checks input:checked')].map(c => c.value);
+  document.getElementById('type-summary').textContent = main.length ? main.join('・') : 'すべての種別';
+}
 
 // ── 地図初期化 ──
 const map = L.map('map').setView([36.5, 137.0], 5);
@@ -330,29 +436,26 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-let raceMarkers = [];
-let facilityMarkers = [];
-let activeCard = null;
+let raceMarkers = [], facilityMarkers = [];
 
 function makeIcon(color, size=14) {
   return L.divIcon({
     className: '',
     html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>`,
-    iconSize: [size, size],
-    iconAnchor: [size/2, size/2]
+    iconSize: [size, size], iconAnchor: [size/2, size/2]
   });
 }
 
 // ── 検索 ──
 function doSearch() {
-  const region  = document.getElementById('filter-region').value;
-  const pref    = document.getElementById('filter-pref').value;
-  const month   = parseInt(document.getElementById('filter-month').value) || null;
-  const week    = parseInt(document.getElementById('filter-week').value) || null;
-  const types   = [...document.querySelectorAll('.type-checkboxes input:checked')].map(c => c.value);
+  const region = document.getElementById('filter-region').value;
+  const pref   = document.getElementById('filter-pref').value;
+  const month  = parseInt(document.getElementById('filter-month').value) || null;
+  const week   = parseInt(document.getElementById('filter-week').value)  || null;
+  const mainTypes = [...document.querySelectorAll('#main-type-checks input:checked')].map(c => c.value);
+  const subTypes  = [...document.querySelectorAll('#sub-type-checks input:checked')].map(c => c.value);
 
-  clearFacilityMarkers();
-  clearRaceMarkers();
+  clearFacilityMarkers(); clearRaceMarkers();
   document.getElementById('legend').classList.remove('visible');
 
   let results = MARATHONS.filter(m => {
@@ -360,7 +463,8 @@ function doSearch() {
     if (pref   && m.pref   !== pref)   return false;
     if (month  && m.month  !== month)  return false;
     if (week   && m.week   !== week)   return false;
-    if (!types.includes(m.type))       return false;
+    if (mainTypes.length && !mainTypes.includes(m.type)) return false;
+    if (subTypes.length  && !subTypes.includes(m.subtype)) return false;
     return true;
   });
 
@@ -372,64 +476,51 @@ function renderRaceMarkers(races) {
   races.forEach(r => {
     const marker = L.marker([r.lat, r.lng], { icon: makeIcon('#1a8fe3', 16) })
       .addTo(map)
-      .bindPopup(`<b>${r.name}</b><br>${r.pref} | ${r.month}月第${r.week}週 | ${r.type} ${r.dist}`);
+      .bindPopup(`<b>${r.name}</b><br>${r.pref} | ${r.month}月第${r.week}週<br>${r.type} / ${r.subtype}`);
     marker.on('click', () => selectRace(r));
     raceMarkers.push(marker);
   });
-
   if (races.length > 0) {
-    const group = L.featureGroup(raceMarkers);
-    map.fitBounds(group.getBounds().pad(0.2));
+    map.fitBounds(L.featureGroup(raceMarkers).getBounds().pad(0.2));
   }
 }
 
-function clearRaceMarkers() {
-  raceMarkers.forEach(m => map.removeLayer(m));
-  raceMarkers = [];
-}
-
-function clearFacilityMarkers() {
-  facilityMarkers.forEach(m => map.removeLayer(m));
-  facilityMarkers = [];
-}
+function clearRaceMarkers()    { raceMarkers.forEach(m => map.removeLayer(m));    raceMarkers = []; }
+function clearFacilityMarkers(){ facilityMarkers.forEach(m => map.removeLayer(m)); facilityMarkers = []; }
 
 function renderResults(races) {
-  const listEl = document.getElementById('result-list');
+  const listEl  = document.getElementById('result-list');
   const countEl = document.getElementById('result-count');
   listEl.innerHTML = '';
   countEl.textContent = races.length > 0 ? `${races.length}件の大会が見つかりました` : '条件に合う大会が見つかりませんでした';
 
   races.forEach(r => {
-    const typeClass = { ロード:'tag-road', トレイル:'tag-trail', トラック:'tag-track', ウルトラ:'tag-ultra' }[r.type] || 'tag-road';
+    const tc = {ロード:'tag-road',トレイル:'tag-trail',トラック:'tag-track',ウルトラ:'tag-ultra'}[r.type]||'tag-road';
     const card = document.createElement('div');
     card.className = 'result-card';
-    card.dataset.id = r.id;
     card.innerHTML = `
       <div class="card-name">${r.name}</div>
       <div class="card-meta">
         <span>📍 ${r.pref}</span>
         <span>📅 ${r.month}月 第${r.week}週</span>
-        <span>🏃 ${r.dist}</span>
-        <span class="tag ${typeClass}">${r.type}</span>
-      </div>
-    `;
-    card.addEventListener('click', () => selectRace(r, card));
+        <span>🏃 ${r.subtype}</span>
+        <span class="tag ${tc}">${r.type}</span>
+      </div>`;
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.result-card').forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      selectRace(r);
+    });
     listEl.appendChild(card);
   });
 }
 
-// ── 大会選択 → 周辺施設取得 ──
-async function selectRace(race, cardEl) {
-  // カードのハイライト
-  document.querySelectorAll('.result-card').forEach(c => c.classList.remove('active'));
-  if (cardEl) { cardEl.classList.add('active'); activeCard = cardEl; }
-
+// ── 大会選択 → 周辺施設 ──
+async function selectRace(race) {
   map.setView([race.lat, race.lng], 14);
   clearFacilityMarkers();
-
   document.getElementById('loading').classList.add('visible');
   document.getElementById('legend').classList.remove('visible');
-
   try {
     const facilities = await fetchNearby(race.lat, race.lng, 1500);
     document.getElementById('loading').classList.remove('visible');
@@ -441,18 +532,15 @@ async function selectRace(race, cardEl) {
   }
 }
 
-// ── Overpass API で周辺施設取得 ──
 async function fetchNearby(lat, lng, radius) {
-  const q = `
-[out:json][timeout:20];
+  const q = `[out:json][timeout:20];
 (
   node["tourism"="hotel"](around:${radius},${lat},${lng});
   node["amenity"="hotel"](around:${radius},${lat},${lng});
   node["amenity"="guest_house"](around:${radius},${lat},${lng});
   node["railway"="station"](around:${radius},${lat},${lng});
   node["shop"="convenience"](around:${radius},${lat},${lng});
-);
-out body;`;
+);out body;`;
   const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(q)}`);
   const data = await res.json();
   return data.elements;
@@ -461,29 +549,23 @@ out body;`;
 function renderFacilityMarkers(elements) {
   elements.forEach(el => {
     if (!el.lat || !el.lon) return;
-    let color, label;
     const tags = el.tags || {};
-
-    if (tags.tourism === 'hotel' || tags.amenity === 'hotel' || tags.amenity === 'guest_house') {
-      color = '#f97316'; label = '🏨 ' + (tags.name || 'ホテル');
-    } else if (tags.railway === 'station') {
-      color = '#22c55e'; label = '🚉 ' + (tags.name || '駅');
-    } else if (tags.shop === 'convenience') {
-      color = '#ef4444'; label = '🏪 ' + (tags.name || 'コンビニ');
+    let color, label;
+    if (tags.tourism==='hotel'||tags.amenity==='hotel'||tags.amenity==='guest_house') {
+      color='#f97316'; label='🏨 '+(tags.name||'ホテル');
+    } else if (tags.railway==='station') {
+      color='#22c55e'; label='🚉 '+(tags.name||'駅');
+    } else if (tags.shop==='convenience') {
+      color='#ef4444'; label='🏪 '+(tags.name||'コンビニ');
     } else return;
-
-    const m = L.marker([el.lat, el.lon], { icon: makeIcon(color, 12) })
-      .addTo(map)
-      .bindPopup(label);
-    facilityMarkers.push(m);
+    facilityMarkers.push(L.marker([el.lat,el.lon],{icon:makeIcon(color,12)}).addTo(map).bindPopup(label));
   });
 }
 
 function scrollToSearch() {
-  document.getElementById('search-section').scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('search-section').scrollIntoView({behavior:'smooth'});
 }
 
-// 初期表示
 doSearch();
 </script>
 </body>
