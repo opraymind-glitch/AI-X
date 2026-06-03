@@ -4,9 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RunStay — マラソン遠征を、もっとかんたんに。</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     :root {
       --blue: #1a8fe3;
       --blue-dark: #1270b8;
@@ -15,337 +16,475 @@
       --gray: #6b7280;
       --white: #ffffff;
     }
-
-    body {
-      font-family: 'Helvetica Neue', 'Hiragino Sans', sans-serif;
-      color: var(--text);
-      background: var(--white);
-      line-height: 1.6;
-    }
+    body { font-family: 'Helvetica Neue', 'Hiragino Sans', sans-serif; color: var(--text); background: var(--white); line-height: 1.6; }
 
     /* ── ヘッダー ── */
     header {
       background: var(--white);
-      padding: 16px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      padding: 14px 20px;
+      display: flex; justify-content: space-between; align-items: center;
       border-bottom: 1px solid #e5e7eb;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      position: sticky; top: 0; z-index: 1000;
     }
-
-    .logo {
-      font-size: 1.4rem;
-      font-weight: 800;
-      color: var(--blue);
-      letter-spacing: 0.05em;
-    }
-
-    header .cta-sm {
-      background: var(--blue);
-      color: var(--white);
-      border: none;
-      padding: 8px 20px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
+    .logo { font-size: 1.4rem; font-weight: 800; color: var(--blue); letter-spacing: 0.05em; }
+    .header-btn {
+      background: var(--blue); color: var(--white); border: none;
+      padding: 8px 18px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; cursor: pointer;
     }
 
     /* ── ヒーロー ── */
     .hero {
       background: linear-gradient(160deg, #1a8fe3 0%, #0d5fa0 100%);
-      color: var(--white);
-      text-align: center;
-      padding: 72px 24px 80px;
+      color: var(--white); text-align: center; padding: 60px 20px 64px;
     }
-
-    .hero h1 {
-      font-size: clamp(1.8rem, 6vw, 2.8rem);
-      font-weight: 900;
-      line-height: 1.3;
-      margin-bottom: 16px;
+    .hero h1 { font-size: clamp(1.7rem, 6vw, 2.6rem); font-weight: 900; line-height: 1.3; margin-bottom: 14px; }
+    .hero p { font-size: 0.95rem; opacity: 0.9; margin-bottom: 28px; max-width: 320px; margin-left: auto; margin-right: auto; }
+    .btn-white {
+      display: inline-block; background: var(--white); color: var(--blue);
+      font-weight: 800; font-size: 1rem; padding: 14px 36px; border-radius: 50px;
+      text-decoration: none; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      transition: transform 0.15s; cursor: pointer; border: none;
     }
+    .btn-white:hover { transform: translateY(-2px); }
 
-    .hero p {
-      font-size: 1rem;
-      opacity: 0.9;
-      margin-bottom: 36px;
-      max-width: 320px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .btn-primary {
-      display: inline-block;
-      background: var(--white);
-      color: var(--blue);
-      font-weight: 800;
-      font-size: 1rem;
-      padding: 16px 40px;
-      border-radius: 50px;
-      text-decoration: none;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-      transition: transform 0.15s, box-shadow 0.15s;
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-    }
-
-    .hero-note {
-      margin-top: 16px;
-      font-size: 0.75rem;
-      opacity: 0.7;
-    }
-
-    /* ── 課題提起 ── */
-    .pain {
+    /* ── 検索セクション ── */
+    #search-section {
       background: var(--blue-light);
-      padding: 56px 24px;
-      text-align: center;
+      padding: 40px 16px 32px;
+    }
+    #search-section h2 { text-align: center; font-size: 1.3rem; font-weight: 800; margin-bottom: 20px; }
+
+    .filter-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      max-width: 600px;
+      margin: 0 auto 16px;
+    }
+    .filter-full { grid-column: 1 / -1; }
+
+    .filter-group label {
+      display: block; font-size: 0.78rem; font-weight: 700;
+      color: var(--blue-dark); margin-bottom: 4px;
+    }
+    .filter-group select, .filter-group input {
+      width: 100%; padding: 9px 10px; border: 1.5px solid #c7dff5;
+      border-radius: 8px; font-size: 0.9rem; background: var(--white);
+      appearance: none; -webkit-appearance: none;
+    }
+    .filter-group select:focus { outline: none; border-color: var(--blue); }
+
+    .type-group { grid-column: 1 / -1; }
+    .type-group label.group-label {
+      display: block; font-size: 0.78rem; font-weight: 700;
+      color: var(--blue-dark); margin-bottom: 8px;
+    }
+    .type-checkboxes { display: flex; flex-wrap: wrap; gap: 8px; }
+    .type-checkboxes label {
+      display: flex; align-items: center; gap: 5px;
+      background: var(--white); border: 1.5px solid #c7dff5;
+      border-radius: 20px; padding: 5px 12px; font-size: 0.85rem;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .type-checkboxes input[type=checkbox] { accent-color: var(--blue); }
+    .type-checkboxes label:has(input:checked) {
+      background: var(--blue); color: white; border-color: var(--blue);
     }
 
-    .pain h2 {
-      font-size: 1.3rem;
-      font-weight: 800;
-      margin-bottom: 28px;
-      color: var(--text);
+    .search-btn {
+      display: block; width: 100%; max-width: 600px; margin: 0 auto;
+      background: var(--blue); color: var(--white); border: none;
+      padding: 14px; border-radius: 10px; font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: background 0.15s;
     }
+    .search-btn:hover { background: var(--blue-dark); }
 
-    .pain-list {
-      list-style: none;
-      max-width: 360px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+    /* ── 地図 ── */
+    #map-section { padding: 0; }
+    #map { width: 100%; height: 60vh; min-height: 320px; }
+
+    /* ── 結果リスト ── */
+    #results-section { padding: 20px 16px; }
+    #results-section h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: var(--gray); }
+    #result-list { display: flex; flex-direction: column; gap: 10px; max-width: 600px; margin: 0 auto; }
+    .result-card {
+      background: var(--white); border: 1.5px solid #e5e7eb;
+      border-radius: 12px; padding: 14px 16px; cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
-
-    .pain-list li {
-      background: var(--white);
-      border-left: 4px solid var(--blue);
-      border-radius: 8px;
-      padding: 14px 16px;
-      font-size: 0.95rem;
-      text-align: left;
+    .result-card:hover, .result-card.active {
+      border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,143,227,0.12);
     }
-
-    /* ── 機能紹介 ── */
-    .features {
-      padding: 60px 24px;
-      text-align: center;
+    .result-card .card-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+    .result-card .card-meta { font-size: 0.8rem; color: var(--gray); display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag {
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      font-size: 0.75rem; font-weight: 600;
     }
+    .tag-road { background: #dbeafe; color: #1d4ed8; }
+    .tag-trail { background: #dcfce7; color: #15803d; }
+    .tag-track { background: #fef9c3; color: #854d0e; }
+    .tag-ultra { background: #fce7f3; color: #9d174d; }
 
-    .features h2 {
-      font-size: 1.4rem;
-      font-weight: 800;
-      margin-bottom: 36px;
-    }
-
-    .feature-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-      max-width: 400px;
-      margin: 0 auto;
-    }
-
-    .feature-card {
+    /* ── 施設凡例 ── */
+    #legend {
+      display: none;
+      padding: 12px 16px;
       background: var(--blue-light);
-      border-radius: 16px;
-      padding: 28px 20px;
+      border-top: 1px solid #c7dff5;
     }
+    #legend.visible { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 600; }
+    .legend-dot { width: 14px; height: 14px; border-radius: 50%; }
 
-    .feature-card .icon {
-      font-size: 2.4rem;
-      margin-bottom: 12px;
+    /* ── ローディング ── */
+    #loading {
+      display: none; text-align: center; padding: 20px;
+      font-size: 0.9rem; color: var(--gray);
     }
-
-    .feature-card h3 {
-      font-size: 1.05rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-      color: var(--blue-dark);
-    }
-
-    .feature-card p {
-      font-size: 0.9rem;
-      color: var(--gray);
-    }
-
-    /* ── 使い方 ── */
-    .howto {
-      background: var(--blue-light);
-      padding: 56px 24px;
-      text-align: center;
-    }
-
-    .howto h2 {
-      font-size: 1.4rem;
-      font-weight: 800;
-      margin-bottom: 36px;
-    }
-
-    .steps {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      max-width: 360px;
-      margin: 0 auto;
-    }
-
-    .step {
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-      text-align: left;
-    }
-
-    .step-num {
-      background: var(--blue);
-      color: var(--white);
-      font-weight: 800;
-      border-radius: 50%;
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      font-size: 0.95rem;
-    }
-
-    .step-text h4 {
-      font-size: 0.95rem;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .step-text p {
-      font-size: 0.85rem;
-      color: var(--gray);
-    }
+    #loading.visible { display: block; }
 
     /* ── CTA締め ── */
     .cta-section {
       background: linear-gradient(160deg, #1a8fe3 0%, #0d5fa0 100%);
-      color: var(--white);
-      text-align: center;
-      padding: 64px 24px;
+      color: var(--white); text-align: center; padding: 56px 24px;
     }
+    .cta-section h2 { font-size: 1.4rem; font-weight: 900; margin-bottom: 10px; }
+    .cta-section p { font-size: 0.9rem; opacity: 0.85; margin-bottom: 28px; }
 
-    .cta-section h2 {
-      font-size: 1.5rem;
-      font-weight: 900;
-      margin-bottom: 12px;
-    }
-
-    .cta-section p {
-      font-size: 0.95rem;
-      opacity: 0.85;
-      margin-bottom: 32px;
-    }
-
-    /* ── フッター ── */
-    footer {
-      background: var(--text);
-      color: #aaa;
-      text-align: center;
-      padding: 24px;
-      font-size: 0.78rem;
-    }
+    footer { background: var(--text); color: #aaa; text-align: center; padding: 20px; font-size: 0.78rem; }
   </style>
 </head>
 <body>
 
-  <!-- ヘッダー -->
-  <header>
-    <div class="logo">RunStay</div>
-    <button class="cta-sm" onclick="document.querySelector('.cta-section').scrollIntoView({behavior:'smooth'})">事前登録する</button>
-  </header>
+<!-- ヘッダー -->
+<header>
+  <div class="logo">RunStay</div>
+  <button class="header-btn" onclick="scrollToSearch()">大会を探す</button>
+</header>
 
-  <!-- ヒーロー -->
-  <section class="hero">
-    <h1>大会もホテルも、<br>これ1本で。</h1>
-    <p>全国のマラソン大会と開催地周辺の宿泊施設を一括検索。遠征の準備がぐっとかんたんになる。</p>
-    <a href="#register" class="btn-primary">事前登録する（無料）</a>
-    <p class="hero-note">近日公開予定 · iOS / Android 対応</p>
-  </section>
+<!-- ヒーロー -->
+<section class="hero">
+  <h1>大会もホテルも、<br>これ1本で。</h1>
+  <p>全国のマラソン大会を検索して、開催地周辺の宿泊施設・駅・コンビニをまとめて確認。</p>
+  <button class="btn-white" onclick="scrollToSearch()">今すぐ大会を探す ↓</button>
+</section>
 
-  <!-- 課題提起 -->
-  <section class="pain">
-    <h2>こんな経験、ありませんか？</h2>
-    <ul class="pain-list">
-      <li>🔍 大会サイト・ホテルサイト・地図を行き来するのが面倒</li>
-      <li>🏨 エントリー後に宿を探したら、会場近くがもう満室だった</li>
-      <li>🗺️ 遠征先の土地勘がなく、会場までのアクセスが不安</li>
-    </ul>
-  </section>
+<!-- 検索セクション -->
+<section id="search-section">
+  <h2>🔍 大会を探す</h2>
+  <div class="filter-grid">
 
-  <!-- 機能紹介 -->
-  <section class="features">
-    <h2>RunStay でできること</h2>
-    <div class="feature-grid">
-      <div class="feature-card">
-        <div class="icon">🏃</div>
-        <h3>全国マラソン大会を検索</h3>
-        <p>都道府県・月・距離で絞り込み。気になる大会をすぐに見つけられる。</p>
-      </div>
-      <div class="feature-card">
-        <div class="icon">🏨</div>
-        <h3>周辺の宿泊施設を一覧表示</h3>
-        <p>会場から近い順にホテル・旅館を表示。距離とアクセスを一目で確認。</p>
-      </div>
-      <div class="feature-card">
-        <div class="icon">📋</div>
-        <h3>大会 ＋ 宿泊を同時に確認</h3>
-        <p>アプリを切り替えなくてOK。遠征計画を1画面でまとめて管理できる。</p>
+    <!-- 地域 -->
+    <div class="filter-group">
+      <label>地域</label>
+      <select id="filter-region" onchange="updatePrefecture()">
+        <option value="">すべての地域</option>
+        <option>北海道</option>
+        <option>東北</option>
+        <option>関東</option>
+        <option>中部</option>
+        <option>近畿</option>
+        <option>中国</option>
+        <option>四国</option>
+        <option>九州・沖縄</option>
+      </select>
+    </div>
+
+    <!-- 都道府県 -->
+    <div class="filter-group">
+      <label>都道府県</label>
+      <select id="filter-pref">
+        <option value="">すべて</option>
+      </select>
+    </div>
+
+    <!-- 月 -->
+    <div class="filter-group">
+      <label>開催月</label>
+      <select id="filter-month" onchange="updateWeek()">
+        <option value="">すべての月</option>
+        <option value="1">1月</option><option value="2">2月</option>
+        <option value="3">3月</option><option value="4">4月</option>
+        <option value="5">5月</option><option value="6">6月</option>
+        <option value="7">7月</option><option value="8">8月</option>
+        <option value="9">9月</option><option value="10">10月</option>
+        <option value="11">11月</option><option value="12">12月</option>
+      </select>
+    </div>
+
+    <!-- 週 -->
+    <div class="filter-group">
+      <label>開催週</label>
+      <select id="filter-week">
+        <option value="">すべての週</option>
+        <option value="1">第1週</option>
+        <option value="2">第2週</option>
+        <option value="3">第3週</option>
+        <option value="4">第4週</option>
+      </select>
+    </div>
+
+    <!-- レース種別 -->
+    <div class="type-group">
+      <label class="group-label">レース種別</label>
+      <div class="type-checkboxes">
+        <label><input type="checkbox" value="ロード" checked> ロード</label>
+        <label><input type="checkbox" value="トレイル" checked> トレイル</label>
+        <label><input type="checkbox" value="トラック" checked> トラック</label>
+        <label><input type="checkbox" value="ウルトラ" checked> ウルトラ</label>
       </div>
     </div>
-  </section>
 
-  <!-- 使い方 -->
-  <section class="howto">
-    <h2>使い方はカンタン3ステップ</h2>
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-text">
-          <h4>行きたいエリア・時期を選ぶ</h4>
-          <p>都道府県・月・距離で大会を絞り込む</p>
-        </div>
+  </div>
+  <button class="search-btn" onclick="doSearch()">検索する</button>
+</section>
+
+<!-- ローディング -->
+<div id="loading">📍 施設情報を取得中...</div>
+
+<!-- 凡例 -->
+<div id="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#1a8fe3"></div>大会会場</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f97316"></div>ホテル</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>駅</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>コンビニ</div>
+</div>
+
+<!-- 地図 -->
+<div id="map-section">
+  <div id="map"></div>
+</div>
+
+<!-- 検索結果リスト -->
+<section id="results-section">
+  <h3 id="result-count"></h3>
+  <div id="result-list"></div>
+</section>
+
+<!-- CTA締め -->
+<section class="cta-section">
+  <h2>アプリ版も近日公開！</h2>
+  <p>通知機能・オフラインマップなど、さらに便利になります。</p>
+  <button class="btn-white">事前登録する（無料）</button>
+</section>
+
+<footer>© 2026 RunStay · 大会データはサンプルです</footer>
+
+<script>
+// ── 都道府県マスタ ──
+const PREF_BY_REGION = {
+  "北海道": ["北海道"],
+  "東北": ["青森県","岩手県","宮城県","秋田県","山形県","福島県"],
+  "関東": ["茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県"],
+  "中部": ["新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県","静岡県","愛知県"],
+  "近畿": ["三重県","滋賀県","京都府","大阪府","兵庫県","奈良県","和歌山県"],
+  "中国": ["鳥取県","島根県","岡山県","広島県","山口県"],
+  "四国": ["徳島県","香川県","愛媛県","高知県"],
+  "九州・沖縄": ["福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県","沖縄県"]
+};
+
+function updatePrefecture() {
+  const region = document.getElementById('filter-region').value;
+  const sel = document.getElementById('filter-pref');
+  sel.innerHTML = '<option value="">すべて</option>';
+  if (region && PREF_BY_REGION[region]) {
+    PREF_BY_REGION[region].forEach(p => {
+      sel.innerHTML += `<option value="${p}">${p}</option>`;
+    });
+  }
+}
+
+function updateWeek() {
+  const month = document.getElementById('filter-month').value;
+  const sel = document.getElementById('filter-week');
+  sel.disabled = !month;
+  if (!month) sel.value = '';
+}
+
+// ── 大会ダミーデータ ──
+const MARATHONS = [
+  { id:1,  name:"東京マラソン",         pref:"東京都",   region:"関東",    lat:35.6813, lng:139.7671, month:3,  week:1, type:"ロード",  dist:"フル" },
+  { id:2,  name:"大阪マラソン",         pref:"大阪府",   region:"近畿",    lat:34.6937, lng:135.5023, month:11, week:4, type:"ロード",  dist:"フル" },
+  { id:3,  name:"北海道マラソン",       pref:"北海道",   region:"北海道",  lat:43.0618, lng:141.3545, month:8,  week:4, type:"ロード",  dist:"フル" },
+  { id:4,  name:"福岡国際マラソン",     pref:"福岡県",   region:"九州・沖縄",lat:33.5904,lng:130.4017,month:12, week:1, type:"ロード",  dist:"フル" },
+  { id:5,  name:"京都マラソン",         pref:"京都府",   region:"近畿",    lat:35.0116, lng:135.7681, month:3,  week:2, type:"ロード",  dist:"フル" },
+  { id:6,  name:"神戸マラソン",         pref:"兵庫県",   region:"近畿",    lat:34.6901, lng:135.1956, month:11, week:3, type:"ロード",  dist:"フル" },
+  { id:7,  name:"横浜マラソン",         pref:"神奈川県", region:"関東",    lat:35.4437, lng:139.6380, month:10, week:4, type:"ロード",  dist:"フル" },
+  { id:8,  name:"富士登山競走",         pref:"山梨県",   region:"中部",    lat:35.3606, lng:138.7274, month:7,  week:4, type:"トレイル",dist:"26km" },
+  { id:9,  name:"UTMF",               pref:"静岡県",   region:"中部",    lat:35.3606, lng:138.7274, month:4,  week:3, type:"トレイル",dist:"165km"},
+  { id:10, name:"信越五岳トレイル",     pref:"長野県",   region:"中部",    lat:36.7513, lng:138.1812, month:9,  week:2, type:"トレイル",dist:"110km"},
+  { id:11, name:"野辺山ウルトラ",       pref:"長野県",   region:"中部",    lat:35.9419, lng:138.4748, month:5,  week:3, type:"ウルトラ",dist:"100km"},
+  { id:12, name:"サロマ湖100kmウルトラ",pref:"北海道",   region:"北海道",  lat:44.1167, lng:143.9667, month:6,  week:4, type:"ウルトラ",dist:"100km"},
+  { id:13, name:"仙台国際ハーフ",       pref:"宮城県",   region:"東北",    lat:38.2682, lng:140.8694, month:5,  week:2, type:"ロード",  dist:"ハーフ"},
+  { id:14, name:"いびがわマラソン",     pref:"岐阜県",   region:"中部",    lat:35.5072, lng:136.5642, month:11, week:2, type:"ロード",  dist:"フル" },
+  { id:15, name:"愛媛マラソン",         pref:"愛媛県",   region:"四国",    lat:33.8416, lng:132.7657, month:2,  week:1, type:"ロード",  dist:"フル" },
+  { id:16, name:"那覇マラソン",         pref:"沖縄県",   region:"九州・沖縄",lat:26.2124,lng:127.6809,month:12, week:1, type:"ロード",  dist:"フル" },
+  { id:17, name:"水戸黄門漫遊マラソン", pref:"茨城県",   region:"関東",    lat:36.3716, lng:140.4750, month:10, week:4, type:"ロード",  dist:"フル" },
+  { id:18, name:"つくばマラソン",       pref:"茨城県",   region:"関東",    lat:36.0832, lng:140.1113, month:11, week:4, type:"ロード",  dist:"フル" },
+];
+
+// ── 地図初期化 ──
+const map = L.map('map').setView([36.5, 137.0], 5);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+
+let raceMarkers = [];
+let facilityMarkers = [];
+let activeCard = null;
+
+function makeIcon(color, size=14) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>`,
+    iconSize: [size, size],
+    iconAnchor: [size/2, size/2]
+  });
+}
+
+// ── 検索 ──
+function doSearch() {
+  const region  = document.getElementById('filter-region').value;
+  const pref    = document.getElementById('filter-pref').value;
+  const month   = parseInt(document.getElementById('filter-month').value) || null;
+  const week    = parseInt(document.getElementById('filter-week').value) || null;
+  const types   = [...document.querySelectorAll('.type-checkboxes input:checked')].map(c => c.value);
+
+  clearFacilityMarkers();
+  clearRaceMarkers();
+  document.getElementById('legend').classList.remove('visible');
+
+  let results = MARATHONS.filter(m => {
+    if (region && m.region !== region) return false;
+    if (pref   && m.pref   !== pref)   return false;
+    if (month  && m.month  !== month)  return false;
+    if (week   && m.week   !== week)   return false;
+    if (!types.includes(m.type))       return false;
+    return true;
+  });
+
+  renderResults(results);
+  renderRaceMarkers(results);
+}
+
+function renderRaceMarkers(races) {
+  races.forEach(r => {
+    const marker = L.marker([r.lat, r.lng], { icon: makeIcon('#1a8fe3', 16) })
+      .addTo(map)
+      .bindPopup(`<b>${r.name}</b><br>${r.pref} | ${r.month}月第${r.week}週 | ${r.type} ${r.dist}`);
+    marker.on('click', () => selectRace(r));
+    raceMarkers.push(marker);
+  });
+
+  if (races.length > 0) {
+    const group = L.featureGroup(raceMarkers);
+    map.fitBounds(group.getBounds().pad(0.2));
+  }
+}
+
+function clearRaceMarkers() {
+  raceMarkers.forEach(m => map.removeLayer(m));
+  raceMarkers = [];
+}
+
+function clearFacilityMarkers() {
+  facilityMarkers.forEach(m => map.removeLayer(m));
+  facilityMarkers = [];
+}
+
+function renderResults(races) {
+  const listEl = document.getElementById('result-list');
+  const countEl = document.getElementById('result-count');
+  listEl.innerHTML = '';
+  countEl.textContent = races.length > 0 ? `${races.length}件の大会が見つかりました` : '条件に合う大会が見つかりませんでした';
+
+  races.forEach(r => {
+    const typeClass = { ロード:'tag-road', トレイル:'tag-trail', トラック:'tag-track', ウルトラ:'tag-ultra' }[r.type] || 'tag-road';
+    const card = document.createElement('div');
+    card.className = 'result-card';
+    card.dataset.id = r.id;
+    card.innerHTML = `
+      <div class="card-name">${r.name}</div>
+      <div class="card-meta">
+        <span>📍 ${r.pref}</span>
+        <span>📅 ${r.month}月 第${r.week}週</span>
+        <span>🏃 ${r.dist}</span>
+        <span class="tag ${typeClass}">${r.type}</span>
       </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-text">
-          <h4>気になる大会をタップ</h4>
-          <p>開催地・定員・エントリー情報をすぐ確認</p>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-text">
-          <h4>周辺の宿泊施設をチェック</h4>
-          <p>会場近くのホテルをまとめて比較・検討</p>
-        </div>
-      </div>
-    </div>
-  </section>
+    `;
+    card.addEventListener('click', () => selectRace(r, card));
+    listEl.appendChild(card);
+  });
+}
 
-  <!-- CTA締め -->
-  <section class="cta-section" id="register">
-    <h2>遠征の準備を、もっとかんたんに。</h2>
-    <p>事前登録で公開時にいち早くお知らせします。</p>
-    <a href="#" class="btn-primary">事前登録する（無料）</a>
-  </section>
+// ── 大会選択 → 周辺施設取得 ──
+async function selectRace(race, cardEl) {
+  // カードのハイライト
+  document.querySelectorAll('.result-card').forEach(c => c.classList.remove('active'));
+  if (cardEl) { cardEl.classList.add('active'); activeCard = cardEl; }
 
-  <footer>
-    © 2026 RunStay · すべての情報は仮のものです
-  </footer>
+  map.setView([race.lat, race.lng], 14);
+  clearFacilityMarkers();
 
+  document.getElementById('loading').classList.add('visible');
+  document.getElementById('legend').classList.remove('visible');
+
+  try {
+    const facilities = await fetchNearby(race.lat, race.lng, 1500);
+    document.getElementById('loading').classList.remove('visible');
+    document.getElementById('legend').classList.add('visible');
+    renderFacilityMarkers(facilities);
+  } catch(e) {
+    document.getElementById('loading').classList.remove('visible');
+    alert('施設情報の取得に失敗しました。しばらくしてから再試行してください。');
+  }
+}
+
+// ── Overpass API で周辺施設取得 ──
+async function fetchNearby(lat, lng, radius) {
+  const q = `
+[out:json][timeout:20];
+(
+  node["tourism"="hotel"](around:${radius},${lat},${lng});
+  node["amenity"="hotel"](around:${radius},${lat},${lng});
+  node["amenity"="guest_house"](around:${radius},${lat},${lng});
+  node["railway"="station"](around:${radius},${lat},${lng});
+  node["shop"="convenience"](around:${radius},${lat},${lng});
+);
+out body;`;
+  const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(q)}`);
+  const data = await res.json();
+  return data.elements;
+}
+
+function renderFacilityMarkers(elements) {
+  elements.forEach(el => {
+    if (!el.lat || !el.lon) return;
+    let color, label;
+    const tags = el.tags || {};
+
+    if (tags.tourism === 'hotel' || tags.amenity === 'hotel' || tags.amenity === 'guest_house') {
+      color = '#f97316'; label = '🏨 ' + (tags.name || 'ホテル');
+    } else if (tags.railway === 'station') {
+      color = '#22c55e'; label = '🚉 ' + (tags.name || '駅');
+    } else if (tags.shop === 'convenience') {
+      color = '#ef4444'; label = '🏪 ' + (tags.name || 'コンビニ');
+    } else return;
+
+    const m = L.marker([el.lat, el.lon], { icon: makeIcon(color, 12) })
+      .addTo(map)
+      .bindPopup(label);
+    facilityMarkers.push(m);
+  });
+}
+
+function scrollToSearch() {
+  document.getElementById('search-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+// 初期表示
+doSearch();
+</script>
 </body>
 </html>
