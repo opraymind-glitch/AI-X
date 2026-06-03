@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RunStay — マラソン遠征を、もっとかんたんに。</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --blue: #1a8fe3;
+      --blue-dark: #1270b8;
+      --blue-light: #e8f4fd;
+      --text: #1a1a2e;
+      --gray: #6b7280;
+      --white: #ffffff;
+    }
+
+    body {
+      font-family: 'Helvetica Neue', 'Hiragino Sans', sans-serif;
+      color: var(--text);
+      background: var(--white);
+      line-height: 1.6;
+    }
+
+    /* ── ヘッダー ── */
+    header {
+      background: var(--white);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #e5e7eb;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--blue);
+      letter-spacing: 0.05em;
+    }
+
+    header .cta-sm {
+      background: var(--blue);
+      color: var(--white);
+      border: none;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* ── ヒーロー ── */
+    .hero {
+      background: linear-gradient(160deg, #1a8fe3 0%, #0d5fa0 100%);
+      color: var(--white);
+      text-align: center;
+      padding: 72px 24px 80px;
+    }
+
+    .hero h1 {
+      font-size: clamp(1.8rem, 6vw, 2.8rem);
+      font-weight: 900;
+      line-height: 1.3;
+      margin-bottom: 16px;
+    }
+
+    .hero p {
+      font-size: 1rem;
+      opacity: 0.9;
+      margin-bottom: 36px;
+      max-width: 320px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .btn-primary {
+      display: inline-block;
+      background: var(--white);
+      color: var(--blue);
+      font-weight: 800;
+      font-size: 1rem;
+      padding: 16px 40px;
+      border-radius: 50px;
+      text-decoration: none;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+
+    .hero-note {
+      margin-top: 16px;
+      font-size: 0.75rem;
+      opacity: 0.7;
+    }
+
+    /* ── 課題提起 ── */
+    .pain {
+      background: var(--blue-light);
+      padding: 56px 24px;
+      text-align: center;
+    }
+
+    .pain h2 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-bottom: 28px;
+      color: var(--text);
+    }
+
+    .pain-list {
+      list-style: none;
+      max-width: 360px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .pain-list li {
+      background: var(--white);
+      border-left: 4px solid var(--blue);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 0.95rem;
+      text-align: left;
+    }
+
+    /* ── 機能紹介 ── */
+    .features {
+      padding: 60px 24px;
+      text-align: center;
+    }
+
+    .features h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-bottom: 36px;
+    }
+
+    .feature-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .feature-card {
+      background: var(--blue-light);
+      border-radius: 16px;
+      padding: 28px 20px;
+    }
+
+    .feature-card .icon {
+      font-size: 2.4rem;
+      margin-bottom: 12px;
+    }
+
+    .feature-card h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--blue-dark);
+    }
+
+    .feature-card p {
+      font-size: 0.9rem;
+      color: var(--gray);
+    }
+
+    /* ── 使い方 ── */
+    .howto {
+      background: var(--blue-light);
+      padding: 56px 24px;
+      text-align: center;
+    }
+
+    .howto h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-bottom: 36px;
+    }
+
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 360px;
+      margin: 0 auto;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      text-align: left;
+    }
+
+    .step-num {
+      background: var(--blue);
+      color: var(--white);
+      font-weight: 800;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 0.95rem;
+    }
+
+    .step-text h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .step-text p {
+      font-size: 0.85rem;
+      color: var(--gray);
+    }
+
+    /* ── CTA締め ── */
+    .cta-section {
+      background: linear-gradient(160deg, #1a8fe3 0%, #0d5fa0 100%);
+      color: var(--white);
+      text-align: center;
+      padding: 64px 24px;
+    }
+
+    .cta-section h2 {
+      font-size: 1.5rem;
+      font-weight: 900;
+      margin-bottom: 12px;
+    }
+
+    .cta-section p {
+      font-size: 0.95rem;
+      opacity: 0.85;
+      margin-bottom: 32px;
+    }
+
+    /* ── フッター ── */
+    footer {
+      background: var(--text);
+      color: #aaa;
+      text-align: center;
+      padding: 24px;
+      font-size: 0.78rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ヘッダー -->
+  <header>
+    <div class="logo">RunStay</div>
+    <button class="cta-sm" onclick="document.querySelector('.cta-section').scrollIntoView({behavior:'smooth'})">事前登録する</button>
+  </header>
+
+  <!-- ヒーロー -->
+  <section class="hero">
+    <h1>大会もホテルも、<br>これ1本で。</h1>
+    <p>全国のマラソン大会と開催地周辺の宿泊施設を一括検索。遠征の準備がぐっとかんたんになる。</p>
+    <a href="#register" class="btn-primary">事前登録する（無料）</a>
+    <p class="hero-note">近日公開予定 · iOS / Android 対応</p>
+  </section>
+
+  <!-- 課題提起 -->
+  <section class="pain">
+    <h2>こんな経験、ありませんか？</h2>
+    <ul class="pain-list">
+      <li>🔍 大会サイト・ホテルサイト・地図を行き来するのが面倒</li>
+      <li>🏨 エントリー後に宿を探したら、会場近くがもう満室だった</li>
+      <li>🗺️ 遠征先の土地勘がなく、会場までのアクセスが不安</li>
+    </ul>
+  </section>
+
+  <!-- 機能紹介 -->
+  <section class="features">
+    <h2>RunStay でできること</h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="icon">🏃</div>
+        <h3>全国マラソン大会を検索</h3>
+        <p>都道府県・月・距離で絞り込み。気になる大会をすぐに見つけられる。</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🏨</div>
+        <h3>周辺の宿泊施設を一覧表示</h3>
+        <p>会場から近い順にホテル・旅館を表示。距離とアクセスを一目で確認。</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">📋</div>
+        <h3>大会 ＋ 宿泊を同時に確認</h3>
+        <p>アプリを切り替えなくてOK。遠征計画を1画面でまとめて管理できる。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 使い方 -->
+  <section class="howto">
+    <h2>使い方はカンタン3ステップ</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">
+          <h4>行きたいエリア・時期を選ぶ</h4>
+          <p>都道府県・月・距離で大会を絞り込む</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">
+          <h4>気になる大会をタップ</h4>
+          <p>開催地・定員・エントリー情報をすぐ確認</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">
+          <h4>周辺の宿泊施設をチェック</h4>
+          <p>会場近くのホテルをまとめて比較・検討</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA締め -->
+  <section class="cta-section" id="register">
+    <h2>遠征の準備を、もっとかんたんに。</h2>
+    <p>事前登録で公開時にいち早くお知らせします。</p>
+    <a href="#" class="btn-primary">事前登録する（無料）</a>
+  </section>
+
+  <footer>
+    © 2026 RunStay · すべての情報は仮のものです
+  </footer>
+
+</body>
+</html>
