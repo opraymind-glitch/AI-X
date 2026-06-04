@@ -453,6 +453,26 @@ function updateTypeSummary() {
   document.getElementById('type-summary').textContent = main.length ? main.join('・') : 'すべての種別';
 }
 
+// ── 都道府県中心座標 ──
+const PREF_CENTERS = {
+  "北海道":[43.064,141.347],"青森県":[40.824,140.740],"岩手県":[39.703,141.153],
+  "宮城県":[38.268,140.869],"秋田県":[39.718,140.102],"山形県":[38.240,140.363],
+  "福島県":[37.750,140.468],"茨城県":[36.341,140.446],"栃木県":[36.565,139.883],
+  "群馬県":[36.391,139.060],"埼玉県":[35.857,139.649],"千葉県":[35.605,140.123],
+  "東京都":[35.689,139.692],"神奈川県":[35.447,139.642],"新潟県":[37.902,139.023],
+  "富山県":[36.695,137.211],"石川県":[36.594,136.626],"福井県":[36.065,136.222],
+  "山梨県":[35.664,138.568],"長野県":[36.651,138.181],"岐阜県":[35.391,136.722],
+  "静岡県":[34.976,138.383],"愛知県":[35.180,136.907],"三重県":[34.730,136.509],
+  "滋賀県":[35.004,135.868],"京都府":[35.021,135.756],"大阪府":[34.686,135.520],
+  "兵庫県":[34.691,135.183],"奈良県":[34.685,135.833],"和歌山県":[34.226,135.168],
+  "鳥取県":[35.503,134.238],"島根県":[35.472,133.051],"岡山県":[34.661,133.935],
+  "広島県":[34.396,132.460],"山口県":[34.186,131.471],"徳島県":[34.066,134.559],
+  "香川県":[34.340,134.043],"愛媛県":[33.841,132.766],"高知県":[33.560,133.531],
+  "福岡県":[33.606,130.418],"佐賀県":[33.249,130.299],"長崎県":[32.745,129.874],
+  "熊本県":[32.803,130.708],"大分県":[33.238,131.613],"宮崎県":[31.911,131.424],
+  "鹿児島県":[31.560,130.558],"沖縄県":[26.212,127.681]
+};
+
 // ── 地図初期化 ──
 const map = L.map('map').setView([36.5, 137.0], 5);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -460,11 +480,32 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 let raceMarkers = [], facilityMarkers = [];
+let currentResults = [];
+const ZOOM_THRESHOLD = 8; // これ以上で個別表示
 
 function makeIcon(color, size=14) {
   return L.divIcon({
     className: '',
     html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>`,
+    iconSize: [size, size], iconAnchor: [size/2, size/2]
+  });
+}
+
+function makeCountIcon(count, pref) {
+  const size = count >= 10 ? 48 : count >= 5 ? 42 : 36;
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      width:${size}px;height:${size}px;border-radius:50%;
+      background:#1a8fe3;border:3px solid white;
+      box-shadow:0 2px 6px rgba(0,0,0,0.35);
+      display:flex;align-items:center;justify-content:center;
+      flex-direction:column;color:white;font-weight:800;
+      font-family:sans-serif;line-height:1;
+    ">
+      <span style="font-size:${count>=10?14:16}px">${count}</span>
+      <span style="font-size:8px;opacity:0.9">件</span>
+    </div>`,
     iconSize: [size, size], iconAnchor: [size/2, size/2]
   });
 }
@@ -502,7 +543,46 @@ function doSearch() {
   renderRaceMarkers(results);
 }
 
-function renderRaceMarkers(races) {
+function renderRaceMarkers(races, fitBounds = true) {
+  currentResults = races;
+  clearRaceMarkers();
+  if (races.length === 0) return;
+
+  const zoom = map.getZoom();
+  if (zoom < ZOOM_THRESHOLD) {
+    renderAggregated(races);
+  } else {
+    renderIndividual(races);
+  }
+
+  if (fitBounds && raceMarkers.length > 0) {
+    map.fitBounds(L.featureGroup(raceMarkers).getBounds().pad(0.2));
+  }
+}
+
+function renderAggregated(races) {
+  // 都道府県ごとに集計
+  const byPref = {};
+  races.forEach(r => {
+    if (!byPref[r.pref]) byPref[r.pref] = [];
+    byPref[r.pref].push(r);
+  });
+
+  Object.entries(byPref).forEach(([pref, list]) => {
+    const center = PREF_CENTERS[pref];
+    if (!center) return;
+    const marker = L.marker(center, { icon: makeCountIcon(list.length, pref) })
+      .addTo(map)
+      .bindPopup(`<b>${pref}</b><br>${list.length}件の大会<br><small>${list.map(r=>r.name).join('、')}</small>`);
+    // クリックでズームイン
+    marker.on('click', () => {
+      map.setView(center, ZOOM_THRESHOLD + 1);
+    });
+    raceMarkers.push(marker);
+  });
+}
+
+function renderIndividual(races) {
   races.forEach(r => {
     const marker = L.marker([r.lat, r.lng], { icon: makeIcon('#1a8fe3', 16) })
       .addTo(map)
@@ -510,10 +590,12 @@ function renderRaceMarkers(races) {
     marker.on('click', () => selectRace(r));
     raceMarkers.push(marker);
   });
-  if (races.length > 0) {
-    map.fitBounds(L.featureGroup(raceMarkers).getBounds().pad(0.2));
-  }
 }
+
+// ズーム変更時に再描画
+map.on('zoomend', () => {
+  if (currentResults.length > 0) renderRaceMarkers(currentResults, false);
+});
 
 function clearRaceMarkers()    { raceMarkers.forEach(m => map.removeLayer(m));    raceMarkers = []; }
 function clearFacilityMarkers(){ facilityMarkers.forEach(m => map.removeLayer(m)); facilityMarkers = []; }
