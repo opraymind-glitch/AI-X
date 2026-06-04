@@ -1122,17 +1122,21 @@ function renderHotels(hotels, times, raceName) {
 // ── Hot Pepper 飲食店 ──
 async function fetchRestaurants(lat, lng) {
   if (!CONFIG?.hotpepper) return [];
-  const url = `https://webservice.recruit.co.jp/hotpepper/gourmet/v1/?key=${CONFIG.hotpepper}&lat=${lat}&lng=${lng}&range=3&count=30&format=jsonp&callback=hpCallback`;
-  return new Promise((resolve) => {
-    window.hpCallback = (data) => {
-      resolve(data?.results?.shop || []);
-    };
-    const s = document.createElement('script');
-    s.src = url;
-    s.onerror = () => resolve([]);
-    document.head.appendChild(s);
-    setTimeout(() => resolve([]), 5000); // タイムアウト
+  const params = new URLSearchParams({
+    key: CONFIG.hotpepper,
+    lat, lng,
+    range: 3,
+    count: 30,
+    format: 'json'
   });
+  try {
+    const res = await fetch(`https://webservice.recruit.co.jp/hotpepper/gourmet/v1/?${params}`);
+    const data = await res.json();
+    return data?.results?.shop || [];
+  } catch(e) {
+    console.warn('Hot Pepper API error:', e);
+    return [];
+  }
 }
 
 function renderRestaurantMarkers(shops) {
