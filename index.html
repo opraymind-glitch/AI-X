@@ -185,6 +185,69 @@
 
     footer { background: var(--text); color: #aaa; text-align: center; padding: 20px; font-size: 0.78rem; }
 
+    /* ── ボトムシート ── */
+    #sheet-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.35); z-index: 2000;
+      transition: opacity 0.25s;
+      opacity: 0;
+    }
+    #sheet-overlay.visible { display: block; opacity: 1; }
+
+    #bottom-sheet {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--white); border-radius: 20px 20px 0 0;
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.18);
+      z-index: 2100;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+      max-height: 80vh; overflow-y: auto;
+    }
+    #bottom-sheet.open { transform: translateY(0); }
+
+    .sheet-handle {
+      width: 40px; height: 4px; background: #ddd; border-radius: 2px;
+      margin: 12px auto 0; cursor: grab;
+    }
+    .sheet-body { padding: 16px 20px 32px; }
+
+    .sheet-name {
+      font-size: 1.2rem; font-weight: 800; margin-bottom: 12px; line-height: 1.3;
+    }
+    .sheet-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+    .sheet-tag {
+      padding: 3px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 600;
+    }
+
+    .sheet-info {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px; margin-bottom: 18px;
+    }
+    .sheet-info-item {
+      background: var(--blue-light); border-radius: 10px; padding: 10px 12px;
+    }
+    .sheet-info-item .label {
+      font-size: 0.7rem; color: var(--gray); font-weight: 600; margin-bottom: 2px;
+    }
+    .sheet-info-item .value {
+      font-size: 0.9rem; font-weight: 700;
+    }
+
+    .sheet-btns { display: flex; flex-direction: column; gap: 10px; }
+    .sheet-btn {
+      display: block; width: 100%; padding: 13px;
+      border-radius: 10px; font-size: 0.95rem; font-weight: 700;
+      text-align: center; cursor: pointer; border: none; text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .sheet-btn:hover { opacity: 0.85; }
+    .sheet-btn-primary { background: var(--blue); color: var(--white); }
+    .sheet-btn-secondary { background: var(--blue-light); color: var(--blue-dark); }
+    .sheet-btn-outline {
+      background: none; border: 1.5px solid #e5e7eb; color: var(--gray);
+      font-size: 0.85rem;
+    }
+
     /* ── キーワード検索 ── */
     .keyword-block {
       background: var(--white); border-radius: 12px;
@@ -320,6 +383,20 @@
   </div>
   <button class="search-btn" onclick="doSearch()">検索する</button>
 </section>
+
+<!-- オーバーレイ -->
+<div id="sheet-overlay" onclick="closeSheet()"></div>
+
+<!-- ボトムシート -->
+<div id="bottom-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-body">
+    <div class="sheet-name" id="sheet-name"></div>
+    <div class="sheet-tags" id="sheet-tags"></div>
+    <div class="sheet-info" id="sheet-info"></div>
+    <div class="sheet-btns" id="sheet-btns"></div>
+  </div>
+</div>
 
 <!-- ローディング -->
 <div id="loading">📍 施設情報を取得中...</div>
@@ -621,15 +698,86 @@ function renderResults(races) {
     card.addEventListener('click', () => {
       document.querySelectorAll('.result-card').forEach(c => c.classList.remove('active'));
       card.classList.add('active');
-      selectRace(r);
+      selectRace(r, true); // fromList = true
     });
     listEl.appendChild(card);
   });
 }
 
-// ── 大会選択 → 周辺施設 ──
-async function selectRace(race) {
-  map.setView([race.lat, race.lng], 14);
+// ── ボトムシート ──
+function openSheet(race, fromList = false) {
+  const tc = {ロード:'tag-road',トレイル:'tag-trail',ウルトラ:'tag-ultra'}[race.type]||'tag-road';
+
+  document.getElementById('sheet-name').textContent = race.name;
+
+  document.getElementById('sheet-tags').innerHTML = `
+    <span class="sheet-tag ${tc}">${race.type}</span>
+    <span class="sheet-tag" style="background:#f3f4f6;color:#374151">${race.subtype}</span>
+    <span class="sheet-tag" style="background:#f3f4f6;color:#374151">📍 ${race.pref}</span>
+  `;
+
+  document.getElementById('sheet-info').innerHTML = `
+    <div class="sheet-info-item">
+      <div class="label">開催時期</div>
+      <div class="value">${race.month}月 第${race.week}週</div>
+    </div>
+    <div class="sheet-info-item">
+      <div class="label">距離</div>
+      <div class="value">${race.dist}</div>
+    </div>
+  `;
+
+  const btns = [];
+
+  if (fromList) {
+    // リストからのとき：地図で確認ボタン
+    btns.push(`<button class="sheet-btn sheet-btn-primary" onclick="viewOnMap(${race.id})">🗺️ 地図で確認する</button>`);
+  }
+
+  // 周辺施設ボタン（常時表示）
+  btns.push(`<button class="sheet-btn sheet-btn-secondary" onclick="fetchFacilitiesForRace(${race.id})">🏨 周辺のホテル・駅・コンビニを見る</button>`);
+
+  // 公式サイトリンク
+  if (race.url) {
+    btns.push(`<a class="sheet-btn sheet-btn-outline" href="${race.url}" target="_blank" rel="noopener">🔗 公式サイトを見る</a>`);
+  }
+
+  btns.push(`<button class="sheet-btn sheet-btn-outline" onclick="closeSheet()">閉じる</button>`);
+  document.getElementById('sheet-btns').innerHTML = btns.join('');
+
+  document.getElementById('sheet-overlay').classList.add('visible');
+  document.getElementById('bottom-sheet').classList.add('open');
+
+  // 現在選択中のレースIDを保存
+  document.getElementById('bottom-sheet').dataset.raceId = race.id;
+}
+
+function closeSheet() {
+  document.getElementById('bottom-sheet').classList.remove('open');
+  document.getElementById('sheet-overlay').classList.remove('visible');
+}
+
+function viewOnMap(raceId) {
+  const race = MARATHONS.find(r => r.id === raceId);
+  if (!race) return;
+  closeSheet();
+  // 地図セクションへスクロール
+  document.getElementById('map').scrollIntoView({ behavior: 'smooth' });
+  setTimeout(() => {
+    map.setView([race.lat, race.lng], 13);
+    clearFacilityMarkers();
+  }, 400);
+}
+
+async function fetchFacilitiesForRace(raceId) {
+  const race = MARATHONS.find(r => r.id === raceId);
+  if (!race) return;
+
+  // 地図をレース地点に移動
+  document.getElementById('map').scrollIntoView({ behavior: 'smooth' });
+  setTimeout(() => map.setView([race.lat, race.lng], 14), 400);
+
+  closeSheet();
   clearFacilityMarkers();
   document.getElementById('loading').classList.add('visible');
   document.getElementById('legend').classList.remove('visible');
@@ -642,6 +790,11 @@ async function selectRace(race) {
     document.getElementById('loading').classList.remove('visible');
     alert('施設情報の取得に失敗しました。しばらくしてから再試行してください。');
   }
+}
+
+// ── 大会選択 ──
+function selectRace(race, fromList = false) {
+  openSheet(race, fromList);
 }
 
 async function fetchNearby(lat, lng, radius) {
