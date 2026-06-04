@@ -1064,6 +1064,10 @@ async function fetchRakutenHotels(lat, lng) {
   try {
     const res = await fetch(`https://app.rakuten.co.jp/services/api/Travel/SimpleHotelSearch/20170426?${params}`);
     const data = await res.json();
+    if (data.error) {
+      console.error('楽天APIエラー詳細:', data.error, data.error_description);
+      return [];
+    }
     console.log('楽天レスポンス:', data);
     return (data?.hotels || []).map(h => h.hotel[0].hotelBasicInfo);
   } catch(e) {
@@ -1125,25 +1129,31 @@ function renderHotels(hotels, times, raceName) {
   section.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// ── Hot Pepper 飲食店 ──
-async function fetchRestaurants(lat, lng) {
-  if (!CONFIG?.hotpepper) return [];
-  const params = new URLSearchParams({
-    key: CONFIG.hotpepper,
-    lat, lng,
-    range: 3,
-    count: 30,
-    format: 'json'
+// ── Hot Pepper 飲食店（JSONP）──
+function fetchRestaurants(lat, lng) {
+  if (!CONFIG?.hotpepper) return Promise.resolve([]);
+  return new Promise((resolve) => {
+    const cbName = 'hp_cb_' + Date.now();
+    let settled = false;
+    const done = (shops) => {
+      if (settled) return;
+      settled = true;
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      resolve(shops);
+    };
+    window[cbName] = (data) => done(data?.results?.shop || []);
+    const params = new URLSearchParams({
+      key: CONFIG.hotpepper, lat, lng,
+      range: 3, count: 30,
+      format: 'jsonp', callback: cbName
+    });
+    const script = document.createElement('script');
+    script.src = `https://webservice.recruit.co.jp/hotpepper/gourmet/v1/?${params}`;
+    script.onerror = () => { console.warn('HotPepper error'); done([]); };
+    document.head.appendChild(script);
+    setTimeout(() => done([]), 8000);
   });
-  try {
-    const res = await fetch(`https://webservice.recruit.co.jp/hotpepper/gourmet/v1/?${params}`);
-    const data = await res.json();
-    console.log('HotPepperレスポンス:', data);
-    return data?.results?.shop || [];
-  } catch(e) {
-    console.error('HotPepper APIエラー:', e);
-    return [];
-  }
 }
 
 function renderRestaurantMarkers(shops) {
