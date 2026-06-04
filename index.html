@@ -216,13 +216,13 @@
 <!-- ヘッダー -->
 <header>
   <div class="logo">RunStay</div>
-  <button class="header-btn" onclick="scrollToSearch()">大会を探す</button>
+  <button class="header-btn" onclick="scrollToApp()">アプリを入手</button>
 </header>
 
 <!-- ヒーロー -->
 <section class="hero">
   <h1>大会もホテルも、<br>これ1本で。</h1>
-  <p>全国のマラソン大会を検索して、開催地周辺の宿泊施設・駅・コンビニをまとめて確認。</p>
+  <p>全国のマラソン大会を検索して、開催地周辺の宿泊施設・交通機関・コンビニをまとめて確認。</p>
   <button class="btn-white" onclick="scrollToSearch()">今すぐ大会を探す ↓</button>
 </section>
 
@@ -594,6 +594,10 @@ function renderFacilityMarkers(elements) {
 
 function scrollToSearch() {
   document.getElementById('search-section').scrollIntoView({behavior:'smooth'});
+}
+
+function scrollToApp() {
+  document.querySelector('.cta-section').scrollIntoView({behavior:'smooth'});
 }
 
 doSearch();
