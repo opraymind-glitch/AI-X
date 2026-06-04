@@ -1054,16 +1054,22 @@ function renderFacilityMarkers(elements) {
 
 // ── 楽天トラベル ホテル検索 ──
 async function fetchRakutenHotels(lat, lng) {
-  if (!CONFIG?.rakuten) return [];
+  if (!CONFIG?.rakuten) { console.warn('楽天APIキー未設定'); return []; }
   const params = new URLSearchParams({
     applicationId: CONFIG.rakuten,
     latitude: lat, longitude: lng,
     searchRadius: 3, datumType: 1,
     hits: 20, format: 'json'
   });
-  const res = await fetch(`https://app.rakuten.co.jp/services/api/Travel/SimpleHotelSearch/20170426?${params}`);
-  const data = await res.json();
-  return (data?.hotels || []).map(h => h.hotel[0].hotelBasicInfo);
+  try {
+    const res = await fetch(`https://app.rakuten.co.jp/services/api/Travel/SimpleHotelSearch/20170426?${params}`);
+    const data = await res.json();
+    console.log('楽天レスポンス:', data);
+    return (data?.hotels || []).map(h => h.hotel[0].hotelBasicInfo);
+  } catch(e) {
+    console.error('楽天APIエラー:', e);
+    return [];
+  }
 }
 
 // ── OSRM 徒歩移動時間（一括取得） ──
@@ -1132,9 +1138,10 @@ async function fetchRestaurants(lat, lng) {
   try {
     const res = await fetch(`https://webservice.recruit.co.jp/hotpepper/gourmet/v1/?${params}`);
     const data = await res.json();
+    console.log('HotPepperレスポンス:', data);
     return data?.results?.shop || [];
   } catch(e) {
-    console.warn('Hot Pepper API error:', e);
+    console.error('HotPepper APIエラー:', e);
     return [];
   }
 }
