@@ -6,6 +6,7 @@
   <title>RunStay — マラソン遠征を、もっとかんたんに。</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="data/marathons.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -269,7 +270,6 @@
       <div class="tag-checks" id="main-type-checks">
         <label><input type="checkbox" name="main" value="ロード"  onchange="onMainTypeChange()"> ロード</label>
         <label><input type="checkbox" name="main" value="トレイル" onchange="onMainTypeChange()"> トレイル</label>
-        <label><input type="checkbox" name="main" value="トラック" onchange="onMainTypeChange()"> トラック</label>
         <label><input type="checkbox" name="main" value="ウルトラ" onchange="onMainTypeChange()"> ウルトラ</label>
       </div>
 
@@ -331,33 +331,10 @@ const PREF_BY_REGION = {
 const SUBTYPES = {
   "ロード":  ["フルマラソン(42.195km)", "ハーフマラソン(21km)", "10km", "5km以下"],
   "トレイル":["ショート(〜30km)", "ミドル(30〜80km)", "ロング(80km〜)"],
-  "トラック":["5000m", "10000m", "その他"],
   "ウルトラ":["50km", "100km", "200km以上"]
 };
 
-// ── 大会ダミーデータ ──
-const MARATHONS = [
-  { id:1,  name:"東京マラソン",          pref:"東京都",    region:"関東",      lat:35.6813, lng:139.7671, month:3,  week:1, type:"ロード",   subtype:"フルマラソン(42.195km)" },
-  { id:2,  name:"大阪マラソン",          pref:"大阪府",    region:"近畿",      lat:34.6937, lng:135.5023, month:11, week:4, type:"ロード",   subtype:"フルマラソン(42.195km)" },
-  { id:3,  name:"北海道マラソン",        pref:"北海道",    region:"北海道",    lat:43.0618, lng:141.3545, month:8,  week:4, type:"ロード",   subtype:"フルマラソン(42.195km)" },
-  { id:4,  name:"福岡国際マラソン",      pref:"福岡県",    region:"九州・沖縄", lat:33.5904, lng:130.4017, month:12, week:1, type:"ロード",   subtype:"フルマラソン(42.195km)" },
-  { id:5,  name:"京都マラソン",          pref:"京都府",    region:"近畿",      lat:35.0116, lng:135.7681, month:3,  week:2, type:"ロード",   subtype:"フルマラソン(42.195km)" },
-  { id:6,  name:"神戸マラソン",          pref:"兵庫県",    region:"近畿",      lat:34.6901, lng:135.1956, month:11, week:3, type:"ロード",   subtype:"フルマラソン(42.195km)" },
-  { id:7,  name:"横浜マラソン",          pref:"神奈川県",  region:"関東",      lat:35.4437, lng:139.6380, month:10, week:4, type:"ロード",   subtype:"フルマラソン(42.195km)" },
-  { id:8,  name:"仙台国際ハーフ",        pref:"宮城県",    region:"東北",      lat:38.2682, lng:140.8694, month:5,  week:2, type:"ロード",   subtype:"ハーフマラソン(21km)" },
-  { id:9,  name:"いびがわマラソン",      pref:"岐阜県",    region:"中部",      lat:35.5072, lng:136.5642, month:11, week:2, type:"ロード",   subtype:"フルマラソン(42.195km)" },
-  { id:10, name:"愛媛マラソン",          pref:"愛媛県",    region:"四国",      lat:33.8416, lng:132.7657, month:2,  week:1, type:"ロード",   subtype:"フルマラソン(42.195km)" },
-  { id:11, name:"那覇マラソン",          pref:"沖縄県",    region:"九州・沖縄", lat:26.2124, lng:127.6809, month:12, week:1, type:"ロード",   subtype:"フルマラソン(42.195km)" },
-  { id:12, name:"水戸黄門漫遊マラソン",  pref:"茨城県",    region:"関東",      lat:36.3716, lng:140.4750, month:10, week:4, type:"ロード",   subtype:"フルマラソン(42.195km)" },
-  { id:13, name:"つくばマラソン",        pref:"茨城県",    region:"関東",      lat:36.0832, lng:140.1113, month:11, week:4, type:"ロード",   subtype:"フルマラソン(42.195km)" },
-  { id:14, name:"富士登山競走",          pref:"山梨県",    region:"中部",      lat:35.3606, lng:138.7274, month:7,  week:4, type:"トレイル",  subtype:"ショート(〜30km)" },
-  { id:15, name:"UTMF",                 pref:"静岡県",    region:"中部",      lat:35.3606, lng:138.7274, month:4,  week:3, type:"トレイル",  subtype:"ロング(80km〜)" },
-  { id:16, name:"信越五岳トレイル",      pref:"長野県",    region:"中部",      lat:36.7513, lng:138.1812, month:9,  week:2, type:"トレイル",  subtype:"ロング(80km〜)" },
-  { id:17, name:"上州武尊山スカイビュー",pref:"群馬県",    region:"関東",      lat:36.7906, lng:139.1803, month:7,  week:2, type:"トレイル",  subtype:"ミドル(30〜80km)" },
-  { id:18, name:"野辺山ウルトラ",        pref:"長野県",    region:"中部",      lat:35.9419, lng:138.4748, month:5,  week:3, type:"ウルトラ",  subtype:"100km" },
-  { id:19, name:"サロマ湖100kmウルトラ", pref:"北海道",    region:"北海道",    lat:44.1167, lng:143.9667, month:6,  week:4, type:"ウルトラ",  subtype:"100km" },
-  { id:20, name:"四万十川ウルトラ",      pref:"高知県",    region:"四国",      lat:33.0747, lng:132.9506, month:10, week:3, type:"ウルトラ",  subtype:"100km" },
-];
+// MARATHONS は data/marathons.js から読み込み済み
 
 // ── 地域 → 都道府県 ──
 function onRegionChange() {
