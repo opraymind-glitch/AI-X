@@ -219,6 +219,40 @@
     .tag-track { background: #fef9c3; color: #854d0e; }
     .tag-ultra { background: #fce7f3; color: #9d174d; }
 
+    /* ── ホテルセクション ── */
+    #hotel-section {
+      display: none; padding: 20px 16px;
+      background: #fff8f0; border-top: 2px solid #fed7aa;
+    }
+    #hotel-section.visible { display: block; }
+    #hotel-section h3 {
+      font-size: 1rem; font-weight: 800; margin-bottom: 14px;
+      color: #c05c00; display: flex; align-items: center; gap: 6px;
+    }
+    .hotel-cards { display: flex; flex-direction: column; gap: 12px; max-width: 600px; margin: 0 auto; }
+    .hotel-card {
+      background: var(--white); border-radius: 12px;
+      border: 1.5px solid #fed7aa; padding: 14px 16px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .hotel-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .hotel-card-name { font-weight: 700; font-size: 0.95rem; line-height: 1.3; flex: 1; }
+    .hotel-time-badge {
+      background: #fef3c7; color: #92400e; border-radius: 20px;
+      padding: 3px 10px; font-size: 0.78rem; font-weight: 700;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .hotel-card-meta { font-size: 0.82rem; color: var(--gray); }
+    .hotel-price { font-size: 1rem; font-weight: 800; color: #c05c00; }
+    .hotel-btn {
+      display: block; background: #f97316; color: white;
+      text-align: center; padding: 10px; border-radius: 8px;
+      text-decoration: none; font-size: 0.9rem; font-weight: 700;
+      transition: opacity 0.15s;
+    }
+    .hotel-btn:hover { opacity: 0.85; }
+    .hotel-loading { text-align: center; color: var(--gray); font-size: 0.9rem; padding: 20px; }
+
     /* ── CTA ── */
     .cta-section {
       background: linear-gradient(160deg, #1a8fe3 0%, #0d5fa0 100%);
@@ -459,6 +493,12 @@
 <div id="map-wrap">
   <div id="map"></div>
 </div>
+
+<!-- ホテルセクション（楽天トラベル） -->
+<section id="hotel-section">
+  <h3>🏨 周辺のホテル <span id="hotel-race-name" style="font-weight:500;color:#92400e;font-size:0.85rem"></span></h3>
+  <div class="hotel-cards" id="hotel-list"></div>
+</section>
 
 <!-- 結果リスト -->
 <section id="results-section">
@@ -912,16 +952,33 @@ async function fetchFacilitiesForRace(raceId) {
   restaurantData = [];
   document.getElementById('loading').classList.add('visible');
   document.getElementById('legend').classList.remove('visible');
+  // ホテルセクションをリセット
+  document.getElementById('hotel-section').classList.remove('visible');
+
   try {
-    // Overpass（施設）とHot Pepper（飲食店）を並列取得
-    const [facilities, shops] = await Promise.all([
+    // Overpass・Hot Pepper・楽天を並列取得
+    const [facilities, shops, hotels] = await Promise.all([
       fetchNearby(race.lat, race.lng, 1500),
-      fetchRestaurants(race.lat, race.lng)
+      fetchRestaurants(race.lat, race.lng),
+      fetchRakutenHotels(race.lat, race.lng)
     ]);
     document.getElementById('loading').classList.remove('visible');
     document.getElementById('legend').classList.add('visible');
     renderFacilityMarkers(facilities);
     renderRestaurantMarkers(shops);
+
+    // ホテルの徒歩時間を取得してカード表示
+    if (hotels.length > 0) {
+      const times = await fetchWalkTimes(race.lat, race.lng, hotels);
+      // 移動時間でソート
+      const sorted = hotels.map((h, i) => ({ h, t: times[i] || 99999 }))
+        .sort((a, b) => a.t - b.t)
+        .map(x => x.h);
+      const sortedTimes = hotels.map((h, i) => ({ h, t: times[i] || 99999 }))
+        .sort((a, b) => a.t - b.t)
+        .map(x => x.t);
+      renderHotels(sorted, sortedTimes, race.name);
+    }
   } catch(e) {
     document.getElementById('loading').classList.remove('visible');
     alert('施設情報の取得に失敗しました。しばらくしてから再試行してください。');
@@ -993,6 +1050,73 @@ function renderFacilityMarkers(elements) {
     if (!facilityToggles[type]) return;
     facilityMarkers.push(L.marker([el.lat,el.lon],{icon:makeIcon(color,12)}).addTo(map).bindPopup(label));
   });
+}
+
+// ── 楽天トラベル ホテル検索 ──
+async function fetchRakutenHotels(lat, lng) {
+  if (!CONFIG?.rakuten) return [];
+  const params = new URLSearchParams({
+    applicationId: CONFIG.rakuten,
+    latitude: lat, longitude: lng,
+    searchRadius: 3, datumType: 1,
+    hits: 20, format: 'json'
+  });
+  const res = await fetch(`https://app.rakuten.co.jp/services/api/Travel/SimpleHotelSearch/20170426?${params}`);
+  const data = await res.json();
+  return (data?.hotels || []).map(h => h.hotel[0].hotelBasicInfo);
+}
+
+// ── OSRM 徒歩移動時間（一括取得） ──
+async function fetchWalkTimes(srcLat, srcLng, hotels) {
+  if (hotels.length === 0) return [];
+  const coords = [
+    `${srcLng},${srcLat}`,
+    ...hotels.map(h => `${h.longitude},${h.latitude}`)
+  ].join(';');
+  const url = `https://router.project-osrm.org/table/v1/walking/${coords}?sources=0&annotations=duration`;
+  const res = await fetch(url);
+  const data = await res.json();
+  return (data?.durations?.[0] || []).slice(1); // 0番目は自分自身なので除外
+}
+
+function formatWalkTime(seconds) {
+  if (!seconds && seconds !== 0) return '不明';
+  const min = Math.round(seconds / 60);
+  if (min === 0) return '徒歩1分未満';
+  return `徒歩約${min}分`;
+}
+
+function renderHotels(hotels, times, raceName) {
+  const section = document.getElementById('hotel-section');
+  const list = document.getElementById('hotel-list');
+  document.getElementById('hotel-race-name').textContent = `— ${raceName}周辺`;
+
+  if (hotels.length === 0) {
+    list.innerHTML = '<div class="hotel-loading">周辺のホテルが見つかりませんでした</div>';
+    section.classList.add('visible');
+    return;
+  }
+
+  list.innerHTML = hotels.map((h, i) => {
+    const time = times[i];
+    const timeTxt = formatWalkTime(time);
+    const price = h.hotelMinCharge
+      ? `¥${Number(h.hotelMinCharge).toLocaleString()}〜/泊`
+      : '料金要確認';
+    return `
+      <div class="hotel-card">
+        <div class="hotel-card-top">
+          <div class="hotel-card-name">${h.hotelName}</div>
+          <span class="hotel-time-badge">🚶 ${timeTxt}</span>
+        </div>
+        <div class="hotel-card-meta">📍 ${h.address1}${h.address2||''}</div>
+        <div class="hotel-price">${price}</div>
+        <a class="hotel-btn" href="${h.planListUrl}" target="_blank" rel="noopener">楽天トラベルで予約</a>
+      </div>`;
+  }).join('');
+
+  section.classList.add('visible');
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ── Hot Pepper 飲食店 ──
