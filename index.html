@@ -184,6 +184,31 @@
     .cta-section p  { font-size: 0.9rem; opacity: 0.85; margin-bottom: 28px; }
 
     footer { background: var(--text); color: #aaa; text-align: center; padding: 20px; font-size: 0.78rem; }
+
+    /* ── キーワード検索 ── */
+    .keyword-block {
+      background: var(--white); border-radius: 12px;
+      border: 1.5px solid #c7dff5; overflow: hidden;
+      padding: 12px 14px;
+    }
+    .keyword-block label {
+      display: block; font-size: 0.78rem; font-weight: 700;
+      color: var(--blue-dark); margin-bottom: 6px;
+    }
+    .keyword-wrap {
+      display: flex; gap: 8px; align-items: center;
+    }
+    .keyword-wrap input {
+      flex: 1; padding: 9px 12px; border: 1.5px solid #c7dff5;
+      border-radius: 8px; font-size: 0.95rem; background: var(--white);
+    }
+    .keyword-wrap input:focus { outline: none; border-color: var(--blue); }
+    .keyword-wrap input::placeholder { color: #bbb; }
+    .keyword-clear {
+      background: none; border: none; font-size: 1.1rem;
+      color: #aaa; cursor: pointer; padding: 4px 6px; line-height: 1;
+    }
+    .keyword-clear:hover { color: var(--text); }
   </style>
 </head>
 <body>
@@ -205,6 +230,16 @@
 <section id="search-section">
   <h2>🔍 大会を探す</h2>
   <div class="filter-stack">
+
+    <!-- ⓪ キーワード -->
+    <div class="keyword-block">
+      <label>大会名・キーワードで探す</label>
+      <div class="keyword-wrap">
+        <input type="text" id="filter-keyword" placeholder="例：東京、富士、トレイル、100km…"
+          oninput="onKeywordInput()" />
+        <button class="keyword-clear" onclick="clearKeyword()" title="クリア">✕</button>
+      </div>
+    </div>
 
     <!-- ① 開催地 -->
     <div class="filter-block">
@@ -336,6 +371,17 @@ const SUBTYPES = {
 
 // MARATHONS は data/marathons.js から読み込み済み
 
+// ── キーワード検索 ──
+function onKeywordInput() {
+  // 入力中はリアルタイムで絞り込み
+  doSearch();
+}
+
+function clearKeyword() {
+  document.getElementById('filter-keyword').value = '';
+  doSearch();
+}
+
 // ── 地域 → 都道府県 ──
 function onRegionChange() {
   const region = document.getElementById('filter-region').value;
@@ -425,10 +471,11 @@ function makeIcon(color, size=14) {
 
 // ── 検索 ──
 function doSearch() {
-  const region = document.getElementById('filter-region').value;
-  const pref   = document.getElementById('filter-pref').value;
-  const month  = parseInt(document.getElementById('filter-month').value) || null;
-  const week   = parseInt(document.getElementById('filter-week').value)  || null;
+  const keyword = document.getElementById('filter-keyword').value.trim().toLowerCase();
+  const region  = document.getElementById('filter-region').value;
+  const pref    = document.getElementById('filter-pref').value;
+  const month   = parseInt(document.getElementById('filter-month').value) || null;
+  const week    = parseInt(document.getElementById('filter-week').value)  || null;
   const mainTypes = [...document.querySelectorAll('#main-type-checks input:checked')].map(c => c.value);
   const subTypes  = [...document.querySelectorAll('#sub-type-checks input:checked')].map(c => c.value);
 
@@ -436,6 +483,12 @@ function doSearch() {
   document.getElementById('legend').classList.remove('visible');
 
   let results = MARATHONS.filter(m => {
+    // キーワード：大会名・都道府県・種別・距離・備考を横断検索
+    if (keyword) {
+      const hay = [m.name, m.pref, m.region, m.type, m.subtype, m.dist, m.note]
+        .join(' ').toLowerCase();
+      if (!hay.includes(keyword)) return false;
+    }
     if (region && m.region !== region) return false;
     if (pref   && m.pref   !== pref)   return false;
     if (month  && m.month  !== month)  return false;
