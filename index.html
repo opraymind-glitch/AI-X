@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="data/marathons.js"></script>
+  <script src="data/config.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -454,9 +455,10 @@
 <!-- 凡例 & 施設トグル -->
 <div id="legend">
   <div class="legend-item"><div class="legend-dot" style="background:#1a8fe3"></div>大会会場</div>
-  <button class="facility-toggle active" id="toggle-hotel"   onclick="toggleFacility('hotel')"  >🏨 宿泊施設</button>
-  <button class="facility-toggle active" id="toggle-station" onclick="toggleFacility('station')" >🚉 駅</button>
-  <button class="facility-toggle active" id="toggle-convenience" onclick="toggleFacility('convenience')">🏪 コンビニ</button>
+  <button class="facility-toggle active" id="toggle-hotel"        onclick="toggleFacility('hotel')"       >🏨 宿泊施設</button>
+  <button class="facility-toggle active" id="toggle-station"      onclick="toggleFacility('station')"     >🚉 駅</button>
+  <button class="facility-toggle active" id="toggle-convenience"  onclick="toggleFacility('convenience')" >🏪 コンビニ</button>
+  <button class="facility-toggle active" id="toggle-restaurant"   onclick="toggleFacility('restaurant')"  >🍽️ 飲食店</button>
 </div>
 
 <!-- 地図 -->
@@ -467,6 +469,7 @@
     <div class="ml-item"><div class="ml-dot" style="background:#f97316"></div>宿泊施設</div>
     <div class="ml-item"><div class="ml-dot" style="background:#22c55e"></div>駅・交通機関</div>
     <div class="ml-item"><div class="ml-dot" style="background:#ef4444"></div>コンビニ</div>
+    <div class="ml-item"><div class="ml-dot" style="background:#a855f7"></div>飲食店</div>
   </div>
 </div>
 
@@ -869,7 +872,10 @@ function openSheet(race, fromList = false) {
   }
 
   // 周辺施設ボタン（常時表示）
-  btns.push(`<button class="sheet-btn sheet-btn-secondary" onclick="fetchFacilitiesForRace(${race.id})">🏨 周辺のホテル・駅・コンビニを見る</button>`);
+  btns.push(`<button class="sheet-btn sheet-btn-secondary" onclick="fetchFacilitiesForRace(${race.id})">🗺️ 周辺の施設・飲食店を地図で見る</button>`);
+
+  // じゃらんリンク
+  btns.push(`<a class="sheet-btn sheet-btn-secondary" href="${jalanUrl(race.pref)}" target="_blank" rel="noopener" style="background:#fff3e0;color:#c05c00">🏯 じゃらんで宿を探す（${race.pref}）</a>`);
 
   // 公式サイトリンク
   if (race.url) {
@@ -911,19 +917,24 @@ async function fetchFacilitiesForRace(raceId) {
   const race = MARATHONS.find(r => r.id === raceId);
   if (!race) return;
 
-  // 地図をレース地点に移動
   document.getElementById('map').scrollIntoView({ behavior: 'smooth' });
   setTimeout(() => map.setView([race.lat, race.lng], 14), 400);
 
   closeSheet();
   clearFacilityMarkers();
+  restaurantData = [];
   document.getElementById('loading').classList.add('visible');
   document.getElementById('legend').classList.remove('visible');
   try {
-    const facilities = await fetchNearby(race.lat, race.lng, 1500);
+    // Overpass（施設）とHot Pepper（飲食店）を並列取得
+    const [facilities, shops] = await Promise.all([
+      fetchNearby(race.lat, race.lng, 1500),
+      fetchRestaurants(race.lat, race.lng)
+    ]);
     document.getElementById('loading').classList.remove('visible');
     document.getElementById('legend').classList.add('visible');
     renderFacilityMarkers(facilities);
+    renderRestaurantMarkers(shops);
   } catch(e) {
     document.getElementById('loading').classList.remove('visible');
     alert('施設情報の取得に失敗しました。しばらくしてから再試行してください。');
@@ -949,17 +960,34 @@ async function fetchNearby(lat, lng, radius) {
   return data.elements;
 }
 
+// ── 都道府県コード（じゃらん用） ──
+const PREF_CODE = {
+  "北海道":1,"青森県":2,"岩手県":3,"宮城県":4,"秋田県":5,"山形県":6,"福島県":7,
+  "茨城県":8,"栃木県":9,"群馬県":10,"埼玉県":11,"千葉県":12,"東京都":13,"神奈川県":14,
+  "新潟県":15,"富山県":16,"石川県":17,"福井県":18,"山梨県":19,"長野県":20,
+  "岐阜県":21,"静岡県":22,"愛知県":23,"三重県":24,"滋賀県":25,"京都府":26,
+  "大阪府":27,"兵庫県":28,"奈良県":29,"和歌山県":30,"鳥取県":31,"島根県":32,
+  "岡山県":33,"広島県":34,"山口県":35,"徳島県":36,"香川県":37,"愛媛県":38,
+  "高知県":39,"福岡県":40,"佐賀県":41,"長崎県":42,"熊本県":43,"大分県":44,
+  "宮崎県":45,"鹿児島県":46,"沖縄県":47
+};
+
+function jalanUrl(pref) {
+  const code = String(PREF_CODE[pref] || '').padStart(2, '0');
+  return `https://www.jalan.net/yad/?PREFCODE[]=${code}`;
+}
+
 // ── 施設トグル ──
-const facilityToggles = { hotel: true, station: true, convenience: true };
-let facilityData = []; // 最後に取得した施設データを保持
+const facilityToggles = { hotel: true, station: true, convenience: true, restaurant: true };
+let facilityData = [];
+let restaurantData = []; // Hot Pepper の結果を別管理
 
 function toggleFacility(type) {
   facilityToggles[type] = !facilityToggles[type];
-  const btn = document.getElementById('toggle-' + type);
-  btn.classList.toggle('active', facilityToggles[type]);
-  // 再描画
+  document.getElementById('toggle-' + type).classList.toggle('active', facilityToggles[type]);
   clearFacilityMarkers();
   renderFacilityMarkers(facilityData);
+  renderRestaurantMarkers(restaurantData);
 }
 
 function renderFacilityMarkers(elements) {
@@ -968,7 +996,6 @@ function renderFacilityMarkers(elements) {
     if (!el.lat || !el.lon) return;
     const tags = el.tags || {};
     let color, label, type;
-
     if (tags.tourism==='hotel'||tags.amenity==='hotel'||tags.amenity==='guest_house') {
       type='hotel'; color='#f97316'; label='🏨 '+(tags.name||'ホテル');
     } else if (tags.railway==='station') {
@@ -976,10 +1003,37 @@ function renderFacilityMarkers(elements) {
     } else if (tags.shop==='convenience') {
       type='convenience'; color='#ef4444'; label='🏪 '+(tags.name||'コンビニ');
     } else return;
-
-    if (!facilityToggles[type]) return; // オフなら非表示
-
+    if (!facilityToggles[type]) return;
     facilityMarkers.push(L.marker([el.lat,el.lon],{icon:makeIcon(color,12)}).addTo(map).bindPopup(label));
+  });
+}
+
+// ── Hot Pepper 飲食店 ──
+async function fetchRestaurants(lat, lng) {
+  if (!CONFIG?.hotpepper) return [];
+  const url = `https://webservice.recruit.co.jp/hotpepper/gourmet/v1/?key=${CONFIG.hotpepper}&lat=${lat}&lng=${lng}&range=3&count=30&format=jsonp&callback=hpCallback`;
+  return new Promise((resolve) => {
+    window.hpCallback = (data) => {
+      resolve(data?.results?.shop || []);
+    };
+    const s = document.createElement('script');
+    s.src = url;
+    s.onerror = () => resolve([]);
+    document.head.appendChild(s);
+    setTimeout(() => resolve([]), 5000); // タイムアウト
+  });
+}
+
+function renderRestaurantMarkers(shops) {
+  restaurantData = shops;
+  if (!facilityToggles.restaurant) return;
+  shops.forEach(shop => {
+    if (!shop.lat || !shop.lng) return;
+    const label = `🍽️ ${shop.name}<br><small>${shop.genre?.name||''} / ${shop.budget?.name||''}</small>`;
+    facilityMarkers.push(
+      L.marker([parseFloat(shop.lat), parseFloat(shop.lng)], { icon: makeIcon('#a855f7', 12) })
+        .addTo(map).bindPopup(label)
+    );
   });
 }
 
