@@ -1073,7 +1073,7 @@ async function fetchWalkTimes(srcLat, srcLng, hotels) {
     `${srcLng},${srcLat}`,
     ...hotels.map(h => `${h.longitude},${h.latitude}`)
   ].join(';');
-  const url = `https://router.project-osrm.org/table/v1/walking/${coords}?sources=0&annotations=duration`;
+  const url = `https://router.project-osrm.org/table/v1/driving/${coords}?sources=0&annotations=duration`;
   const res = await fetch(url);
   const data = await res.json();
   return (data?.durations?.[0] || []).slice(1); // 0番目は自分自身なので除外
@@ -1082,8 +1082,8 @@ async function fetchWalkTimes(srcLat, srcLng, hotels) {
 function formatWalkTime(seconds) {
   if (!seconds && seconds !== 0) return '不明';
   const min = Math.round(seconds / 60);
-  if (min === 0) return '徒歩1分未満';
-  return `徒歩約${min}分`;
+  if (min === 0) return '移動1分未満';
+  return `移動約${min}分`;
 }
 
 function renderHotels(hotels, times, raceName) {
@@ -1107,7 +1107,7 @@ function renderHotels(hotels, times, raceName) {
       <div class="hotel-card">
         <div class="hotel-card-top">
           <div class="hotel-card-name">${h.hotelName}</div>
-          <span class="hotel-time-badge">🚶 ${timeTxt}</span>
+          <span class="hotel-time-badge">🚃 ${timeTxt}（目安）</span>
         </div>
         <div class="hotel-card-meta">📍 ${h.address1}${h.address2||''}</div>
         <div class="hotel-price">${price}</div>
