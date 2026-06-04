@@ -140,7 +140,7 @@
     .search-btn:hover { background: var(--blue-dark); }
 
     /* ── 地図 ── */
-    #map { width: 100%; height: 60vh; min-height: 320px; }
+    #map { width: 100%; height: 75vh; min-height: 480px; }
 
     /* ── 凡例 ── */
     #legend {
@@ -551,7 +551,18 @@ const PREF_CENTERS = {
 };
 
 // ── 地図初期化 ──
-const map = L.map('map').setView([36.5, 137.0], 5);
+const JAPAN_BOUNDS = L.latLngBounds(
+  L.latLng(20.0, 118.0),  // 南西（沖縄より南・与那国より西）
+  L.latLng(46.5, 150.0)   // 北東（北海道より北・択捉より東）
+);
+
+const map = L.map('map', {
+  maxBounds: JAPAN_BOUNDS,
+  maxBoundsViscosity: 1.0,  // 境界で完全に止まる
+  minZoom: 4,
+  maxZoom: 18,
+}).setView([36.5, 136.0], 5);
+
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap contributors'
 }).addTo(map);
