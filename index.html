@@ -132,23 +132,57 @@
       font-size: 0.72rem; font-weight: 700; color: var(--blue-dark); margin-bottom: 8px;
     }
 
-    /* 月カレンダー */
-    .month-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;
+    /* カレンダーウィジェット */
+    .cal-widget { padding: 10px 14px 14px; }
+    .cal-nav {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 10px;
     }
-    .month-cell {
-      padding: 7px 4px; text-align: center; border-radius: 8px;
-      font-size: 0.82rem; font-weight: 600; cursor: pointer;
-      background: var(--white); border: 1.5px solid #c7dff5;
-      transition: all 0.12s; user-select: none;
+    .cal-nav button {
+      background: none; border: 1.5px solid #c7dff5; border-radius: 8px;
+      width: 32px; height: 32px; font-size: 1.1rem; cursor: pointer;
+      color: var(--blue-dark); transition: background 0.12s;
     }
-    .month-cell:hover { background: var(--blue-light); }
-    .month-cell.start, .month-cell.end {
-      background: var(--blue); color: white; border-color: var(--blue);
+    .cal-nav button:hover { background: var(--blue-light); }
+    .cal-nav-label { font-size: 0.95rem; font-weight: 800; color: var(--text); }
+    .cal-dow-row {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      margin-bottom: 4px;
     }
-    .month-cell.in-range {
-      background: var(--blue-light); border-color: var(--blue); color: var(--blue-dark);
+    .cal-dow-cell {
+      text-align: center; font-size: 0.7rem; font-weight: 700;
+      color: var(--gray); padding: 2px 0;
     }
+    .cal-dow-cell:first-child { color: #ef4444; }
+    .cal-dow-cell:last-child  { color: #1a8fe3; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+    .cal-day {
+      position: relative; aspect-ratio: 1; display: flex; align-items: center;
+      justify-content: center; border-radius: 6px; font-size: 0.82rem;
+      font-weight: 600; cursor: pointer; transition: all 0.12s;
+      user-select: none;
+    }
+    .cal-day:hover:not(.empty) { background: var(--blue-light); }
+    .cal-day.empty { cursor: default; }
+    .cal-day.has-race::after {
+      content: ''; position: absolute; bottom: 3px; left: 50%;
+      transform: translateX(-50%); width: 4px; height: 4px;
+      background: var(--blue); border-radius: 50%;
+    }
+    .cal-day.range-start, .cal-day.range-end {
+      background: var(--blue); color: white; border-radius: 6px;
+    }
+    .cal-day.range-start::after, .cal-day.range-end::after { background: white; }
+    .cal-day.in-range { background: var(--blue-light); border-radius: 0; }
+    .cal-day.in-range.has-race::after { background: var(--blue-dark); }
+    .cal-clear-btn {
+      margin-top: 8px; font-size: 0.75rem; background: none;
+      border: 1px solid #c7dff5; border-radius: 12px;
+      padding: 3px 12px; color: var(--gray); cursor: pointer;
+    }
+    .cal-day.sunday  { color: #ef4444; }
+    .cal-day.saturday{ color: #1a8fe3; }
+    .cal-day.range-start, .cal-day.range-end { color: white !important; }
 
     .search-btn {
       display: block; width: 100%; max-width: 600px; margin: 0 auto;
@@ -431,31 +465,28 @@
         <span class="block-label">📅 開催時期</span>
         <span class="block-value" id="date-summary">すべての時期</span>
       </div>
-      <!-- 月カレンダー -->
-      <div style="padding:10px 14px 4px;">
-        <div style="font-size:0.72rem;font-weight:700;color:var(--blue-dark);margin-bottom:8px;">期間を選択（タップで開始・終了月を指定）</div>
-        <div class="month-grid" id="month-grid">
-          <div class="month-cell" data-m="1"  onclick="clickMonth(1)">1月</div>
-          <div class="month-cell" data-m="2"  onclick="clickMonth(2)">2月</div>
-          <div class="month-cell" data-m="3"  onclick="clickMonth(3)">3月</div>
-          <div class="month-cell" data-m="4"  onclick="clickMonth(4)">4月</div>
-          <div class="month-cell" data-m="5"  onclick="clickMonth(5)">5月</div>
-          <div class="month-cell" data-m="6"  onclick="clickMonth(6)">6月</div>
-          <div class="month-cell" data-m="7"  onclick="clickMonth(7)">7月</div>
-          <div class="month-cell" data-m="8"  onclick="clickMonth(8)">8月</div>
-          <div class="month-cell" data-m="9"  onclick="clickMonth(9)">9月</div>
-          <div class="month-cell" data-m="10" onclick="clickMonth(10)">10月</div>
-          <div class="month-cell" data-m="11" onclick="clickMonth(11)">11月</div>
-          <div class="month-cell" data-m="12" onclick="clickMonth(12)">12月</div>
+      <!-- カレンダーウィジェット -->
+      <div class="cal-widget">
+        <div class="cal-nav">
+          <button onclick="calMove(-1)">‹</button>
+          <span class="cal-nav-label" id="cal-label"></span>
+          <button onclick="calMove(1)">›</button>
         </div>
-        <button onclick="clearMonthRange()" style="margin-top:8px;margin-bottom:10px;font-size:0.75rem;background:none;border:1px solid #c7dff5;border-radius:12px;padding:3px 12px;color:var(--gray);cursor:pointer;">クリア</button>
+        <div class="cal-dow-row">
+          <div class="cal-dow-cell">日</div><div class="cal-dow-cell">月</div>
+          <div class="cal-dow-cell">火</div><div class="cal-dow-cell">水</div>
+          <div class="cal-dow-cell">木</div><div class="cal-dow-cell">金</div>
+          <div class="cal-dow-cell">土</div>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <button class="cal-clear-btn" onclick="clearCalRange()">選択をクリア</button>
       </div>
       <!-- 曜日フィルター -->
-      <div style="padding:0 14px 14px;">
-        <div style="font-size:0.72rem;font-weight:700;color:var(--blue-dark);margin-bottom:8px;">曜日で絞り込み</div>
+      <div style="padding:0 14px 14px;border-top:1px solid #e8f4fd;">
+        <div style="font-size:0.72rem;font-weight:700;color:var(--blue-dark);margin:10px 0 8px;">曜日で絞り込み</div>
         <div class="tag-checks" id="dow-checks">
-          <label><input type="checkbox" name="dow" value="日" checked> 日曜</label>
-          <label><input type="checkbox" name="dow" value="土" checked> 土曜</label>
+          <label><input type="checkbox" name="dow" value="日曜" checked> 日曜</label>
+          <label><input type="checkbox" name="dow" value="土曜" checked> 土曜</label>
           <label><input type="checkbox" name="dow" value="平日" checked> 平日</label>
         </div>
       </div>
@@ -623,45 +654,90 @@ function clearKeyword() {
   doSearch();
 }
 
-// ── 月カレンダー範囲ピッカー ──
-let calStart = null, calEnd = null;
+// ── カレンダー日付範囲ピッカー ──
+let calYear = 2026, calMonth = 1;
+let calStart = null, calEnd = null; // "YYYY-MM-DD" 形式
 
-function clickMonth(m) {
-  if (!calStart || (calStart && calEnd)) {
-    calStart = m; calEnd = null;
-  } else {
-    if (m < calStart) { calEnd = calStart; calStart = m; }
-    else { calEnd = m; }
-  }
-  updateMonthGrid();
-  updateDateSummary();
-  doSearch();
-}
+function pad2(n) { return String(n).padStart(2,'0'); }
+function dateStr(y, m, d) { return `${y}-${pad2(m)}-${pad2(d)}`; }
 
-function clearMonthRange() {
-  calStart = null; calEnd = null;
-  updateMonthGrid();
-  updateDateSummary();
-  doSearch();
-}
+// カレンダー描画
+function buildCalendar() {
+  const y = calYear, m = calMonth;
+  document.getElementById('cal-label').textContent = `${y}年${m}月`;
+  const firstDow = new Date(y, m-1, 1).getDay(); // 0=Sun
+  const lastDay  = new Date(y, m, 0).getDate();
 
-function updateMonthGrid() {
-  document.querySelectorAll('.month-cell').forEach(el => {
-    const m = parseInt(el.dataset.m);
-    el.classList.remove('start','end','in-range');
-    if (!calStart) return;
-    const end = calEnd ?? calStart;
-    if (m === calStart) el.classList.add('start');
-    else if (m === end && calEnd) el.classList.add('end');
-    else if (m > calStart && m < end) el.classList.add('in-range');
+  // この月にレースがある日のSet
+  const raceDays = new Set();
+  MARATHONS.forEach(r => {
+    if (r.date) {
+      const [ry, rm, rd] = r.date.split('-').map(Number);
+      if (ry === y && rm === m) raceDays.add(rd);
+    } else if (r.month === m) {
+      // 週から近似（第N週 → 第N日曜を推定）
+      const approx = new Date(y, m-1, 1);
+      let sunCount = 0;
+      for (let d2 = 1; d2 <= lastDay; d2++) {
+        approx.setDate(d2);
+        if (approx.getDay() === 0) { sunCount++; if (sunCount === r.week) { raceDays.add(d2); break; } }
+      }
+    }
   });
+
+  let html = '';
+  // 空セル
+  for (let i = 0; i < firstDow; i++) html += '<div class="cal-day empty"></div>';
+
+  for (let d = 1; d <= lastDay; d++) {
+    const ds = dateStr(y, m, d);
+    const dow = new Date(y, m-1, d).getDay(); // 0=Sun, 6=Sat
+    let cls = 'cal-day';
+    if (raceDays.has(d)) cls += ' has-race';
+    if (dow === 0) cls += ' sunday';
+    if (dow === 6) cls += ' saturday';
+    if (calStart && calEnd) {
+      if (ds === calStart) cls += ' range-start';
+      else if (ds === calEnd) cls += ' range-end';
+      else if (ds > calStart && ds < calEnd) cls += ' in-range';
+    } else if (calStart && ds === calStart) cls += ' range-start';
+    html += `<div class="${cls}" onclick="clickCalDay('${ds}')">${d}</div>`;
+  }
+  document.getElementById('cal-grid').innerHTML = html;
+}
+
+function clickCalDay(ds) {
+  if (!calStart || (calStart && calEnd)) {
+    calStart = ds; calEnd = null;
+  } else {
+    if (ds < calStart) { calEnd = calStart; calStart = ds; }
+    else if (ds === calStart) { calStart = null; } // 同じ日で解除
+    else { calEnd = ds; }
+  }
+  buildCalendar();
+  updateDateSummary();
+  doSearch();
+}
+
+function calMove(dir) {
+  calMonth += dir;
+  if (calMonth > 12) { calMonth = 1; calYear++; }
+  if (calMonth < 1)  { calMonth = 12; calYear--; }
+  buildCalendar();
+}
+
+function clearCalRange() {
+  calStart = null; calEnd = null;
+  buildCalendar();
+  updateDateSummary();
+  doSearch();
 }
 
 function updateDateSummary() {
   if (!calStart) { document.getElementById('date-summary').textContent = 'すべての時期'; return; }
-  const end = calEnd ?? calStart;
+  const fmt = s => `${parseInt(s.slice(5))}月${parseInt(s.slice(8))}日`;
   document.getElementById('date-summary').textContent =
-    calStart === end ? `${calStart}月` : `${calStart}月〜${end}月`;
+    calEnd ? `${fmt(calStart)}〜${fmt(calEnd)}` : fmt(calStart);
 }
 
 // ── 地域 → 都道府県 ──
@@ -799,12 +875,19 @@ function doSearch() {
     }
     if (region && m.region !== region) return false;
     if (pref   && m.pref   !== pref)   return false;
-    // 月範囲フィルター
+    // 日付範囲フィルター
     if (calStart) {
       const rangeEnd = calEnd ?? calStart;
-      if (m.month < calStart || m.month > rangeEnd) return false;
+      if (m.date) {
+        if (m.date < calStart || m.date > rangeEnd) return false;
+      } else {
+        // 日付不明の場合は月で近似フィルター
+        const sMonth = parseInt(calStart.slice(5));
+        const eMonth = parseInt(rangeEnd.slice(5));
+        if (m.month < sMonth || m.month > eMonth) return false;
+      }
     }
-    // 曜日フィルター（dow フィールドがある場合のみ）
+    // 曜日フィルター
     if (dowChecked.length < 3 && m.dow) {
       if (!dowChecked.includes(m.dow)) return false;
     }
@@ -928,10 +1011,13 @@ function openSheet(race, fromList = false) {
     <span class="sheet-tag" style="background:#f3f4f6;color:#374151">📍 ${race.pref}</span>
   `;
 
+  const dateDisp = race.date
+    ? `${parseInt(race.date.slice(5))}月${parseInt(race.date.slice(8))}日（${race.dow||''}）`
+    : `${race.month}月 第${race.week}週`;
   document.getElementById('sheet-info').innerHTML = `
     <div class="sheet-info-item">
-      <div class="label">開催時期</div>
-      <div class="value">${race.month}月 第${race.week}週</div>
+      <div class="label">開催日</div>
+      <div class="value">${dateDisp}</div>
     </div>
     <div class="sheet-info-item">
       <div class="label">距離</div>
@@ -1220,6 +1306,10 @@ function scrollToApp() {
   document.querySelector('.cta-section').scrollIntoView({behavior:'smooth'});
 }
 
+// 初期カレンダー（現在月）
+calYear = new Date().getFullYear();
+calMonth = new Date().getMonth() + 1;
+buildCalendar();
 doSearch();
 </script>
 </body>
